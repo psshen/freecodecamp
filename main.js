@@ -17,9 +17,9 @@ $(function () {
   }
 
   /**
-   * Finite state machine
+   * Finite state machine that maintains a single state transition fn at a time that handles
+   * transitions to other states.
    * @param initState
-   * @returns {{transition: transition}}
    * @constructor
    */
   function FSM (initState) {
@@ -47,10 +47,10 @@ $(function () {
     function startState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
-          $numElem.text(action.val)
+          updateDisplay(action.val)
           return integerState
         case ACTION.PERIOD:
-          $numElem.text(ZERO_TEXT)
+          updateDisplay(ZERO_TEXT)
           return floatState
         case ACTION.BINARY_OP:
           return makeChainState($numElem.text(), action.val)
@@ -59,6 +59,9 @@ $(function () {
       }
     }
 
+    /**
+     * Number displayed on screen is an integer
+     */
     function integerState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
@@ -75,6 +78,9 @@ $(function () {
       }
     }
 
+    /**
+     * Number displayed on screen is floating point
+     */
     function floatState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
@@ -88,21 +94,22 @@ $(function () {
     }
 
     /**
-     * Generator for Chain state transition fn, a modified Start state fn
-     * @param lhsText LHS number string that will be used later
-     * @param op
-     * @returns {chainState}
+     * Generator for the Chain state transition fn, a modified Start state fn in which the first
+     * number in a chain has been entered.
+     * @param lhsText - LHS number string that will be used later
+     * @param op - Operation type
+     * @returns {function} Chain state transition function
      */
     function makeChainState (lhsText, op) {
-      function wrapWithChainingActions (wrappedStateFn) {
+      function wrapWithChainingTransitions (wrappedStateFn) {
         return function (action) {
           switch (action.type) {
-            // Calculate and continue chaining
+            // Calculate and continue chain
             case ACTION.BINARY_OP:
               $numElem.text(calculate(lhsText, op))
               appendPeriod()
               return makeChainState($numElem.text(), action.val)
-            // Calculate and exit chaining
+            // Calculate and exit chain
             case ACTION.EQUALS:
               $numElem.text(calculate(lhsText, op))
               appendPeriod()
@@ -117,11 +124,11 @@ $(function () {
       return function chainState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            $numElem.text(action.val)
-            return wrapWithChainingActions(integerState)
+            updateDisplay(action.val)
+            return wrapWithChainingTransitions(integerState)
           case ACTION.PERIOD:
             $numElem.text(ZERO_TEXT)
-            return wrapWithChainingActions(floatState)
+            return wrapWithChainingTransitions(floatState)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
             appendPeriod()
@@ -130,6 +137,10 @@ $(function () {
             return chainState
         }
       }
+    }
+
+    function updateDisplay (number) {
+      $numElem.text(number)
     }
 
     function appendPeriod () {
@@ -191,6 +202,7 @@ $(function () {
   })()
 
   $('.clear').on('click', Calculator.clear)
+
   $('.sign').on('click', Calculator.reverseSign)
 
   $('.digit').on('click', function () {

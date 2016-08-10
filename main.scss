@@ -10,6 +10,8 @@ $button-adjusted-margin: $button-margin + $button-well-width * 2;
 $button-actual-height: $button-height + $button-well-width * 2;
 $calc-border-size: 8px;
 $screen-color: #7F7D66;
+$calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-width * 2 +
+     $calc-border-size * 2;
 
 @mixin style-button($color) {
   // Make button look more 3d, like it sticks out
@@ -64,8 +66,8 @@ $screen-color: #7F7D66;
 }
 
 @font-face {
-  font-family: Digital7Italic;
-  src: url('fonts/digital-7.italic.ttf') format('truetype');
+  font-family: Digital7MonoItalic;
+  src: url('fonts/digital-7.monoitalic.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
@@ -82,8 +84,7 @@ $screen-color: #7F7D66;
 }
 
 .calculator {
-  width: $button-actual-width * 4 + $button-margin * 5 + $button-well-width * 2 +
-     $calc-border-size * 2;
+  width: $calculator-width;
   margin: auto;
   border-top: $calc-border-size / 2 $top-border-color outset;
   border-bottom: $calc-border-size $top-background-color outset;
@@ -136,7 +137,7 @@ $screen-color: #7F7D66;
 
   .display {
     @include add-glossy-screen-overlay(2);
-    width: 90%;
+    width: 324px;
     height: 60px;
     margin: auto auto 10px;
     border: 4px inset $top-border-color;
@@ -144,16 +145,32 @@ $screen-color: #7F7D66;
     background-color: #7E8383;
 
     .screen {
-      width: 85%;
+      width: 260px;
       height: 40px;
-      margin: 4px auto;
-      padding: 6px 10px;
+      margin: 6px auto;
+      padding: 4px 2px;
       background-color: $screen-color;
       color: black;
-      font-family: Digital7Italic, "KacstDigital", monospace;
-      font-size: 38px;
+      font-family: Digital7MonoItalic, "KacstDigital", monospace;
+      font-size: 42px;
       font-weight: bold;
+
+      letter-spacing: 2px;
       text-align: right;
+
+      span {
+        display: inline-block;
+      }
+
+      #number {
+        width: 220px;
+      }
+
+      #exponent {
+        width: 36px;
+        font-size: 21px;
+        vertical-align: text-top;
+      }
     }
   }
 }

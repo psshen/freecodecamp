@@ -1,6 +1,6 @@
 @font-face {
-  font-family: Digital7Italic;
-  src: url("fonts/digital-7.italic.ttf") format("truetype");
+  font-family: Digital7MonoItalic;
+  src: url("fonts/digital-7.monoitalic.ttf") format("truetype");
   font-weight: normal;
   font-style: normal; }
 @font-face {
@@ -55,7 +55,7 @@
         background-image: linear-gradient(to right, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.09) 25%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.03) 75%, rgba(255, 255, 255, 0) 100%); }
   .top .display {
     position: relative;
-    width: 90%;
+    width: 324px;
     height: 60px;
     margin: auto auto 10px;
     border: 4px inset #324430;
@@ -70,16 +70,25 @@
       height: 100%;
       background-image: linear-gradient(to right, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.3) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%, rgba(255, 255, 255, 0) 100%); }
     .top .display .screen {
-      width: 85%;
+      width: 260px;
       height: 40px;
-      margin: 4px auto;
-      padding: 6px 10px;
+      margin: 6px auto;
+      padding: 4px 2px;
       background-color: #7F7D66;
       color: black;
-      font-family: Digital7Italic, "KacstDigital", monospace;
-      font-size: 38px;
+      font-family: Digital7MonoItalic, "KacstDigital", monospace;
+      font-size: 42px;
       font-weight: bold;
+      letter-spacing: 2px;
       text-align: right; }
+      .top .display .screen span {
+        display: inline-block; }
+      .top .display .screen #number {
+        width: 220px; }
+      .top .display .screen #exponent {
+        width: 36px;
+        font-size: 21px;
+        vertical-align: text-top; }
 
 .bottom {
   height: 350px;
