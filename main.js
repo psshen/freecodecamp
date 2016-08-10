@@ -36,24 +36,101 @@ $(function () {
     }
   }
 
+  function Screen () {
+    const MAX_DIGITS = 10
+    var $significand = $('.significand')
+    var $integer = $('.integer')
+    var $fraction = $('.fraction')
+    var $exponent = $('.exponent')
+
+    function isBlank () {
+      return $significand.text() === '0' && $('.screen.integer').hasClass('decimal')
+    }
+
+    function isDecimal () {
+      return $integer.hasClass('decimal')
+    }
+
+    function numDigits () {
+      return $significand.text().replace('-', '').length
+    }
+
+    function clear () {
+      $fraction.text('')
+      $exponent.text('')
+      $integer.fadeOut(0, function () {
+        $(this).text('0')
+          .toggleClass('decimal', true)
+          .delay(100)
+          .fadeIn(0)
+      })
+    }
+
+    function reverseSign () {
+      if (isBlank()) return
+
+      var currInt = $integer.text()
+      var newNum = currInt.startsWith('-')
+        ? currInt.substr(1)
+        : '-' + currInt
+      $integer.text(newNum)
+    }
+
+    function getNumber () {
+      return parseFloat($integer.text() + (isDecimal() ? '.' : '') + $fraction.text())
+    }
+
+    function printNumber (number) {
+      if (number % 1 === 0) {
+        $integer.text(number)
+        $integer.toggleClass('decimal', false)
+      }
+      else {
+        $integer.text(number / 1)
+        appendPeriod()
+        $fraction.text(number % 1)
+      }
+    }
+
+    function appendPeriod () {
+      $integer.toggleClass('decimal', true)
+    }
+
+    function appendChar (char) {
+      if (numDigits() === MAX_DIGITS) return
+
+      var part = isDecimal() ? $fraction : $integer
+      part.text(part.text() + char)
+    }
+
+    return {
+      getNumber: getNumber,
+      clear: clear,
+      reverseSign: reverseSign,
+      printNumber: printNumber,
+      appendPeriod: appendPeriod,
+      appendChar: appendChar
+    }
+  }
+
   /**
    * Singleton controller for updating calculator view
    */
   var Calculator = (function () {
-    const ZERO_TEXT = '0.'
-    var $numElem = $('#number')
     var fsm = new FSM(startState)
+    var screen = new Screen()
 
     function startState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
-          updateDisplay(action.val)
+          screen.printNumber(action.val)
           return integerState
         case ACTION.PERIOD:
-          updateDisplay(ZERO_TEXT)
+          screen.printNumber(0)
+          screen.appendPeriod()
           return floatState
         case ACTION.BINARY_OP:
-          return makeChainState($numElem.text(), action.val)
+          return makeChainState(screen.getNumber(), action.val)
         default:
           return startState
       }
@@ -65,14 +142,14 @@ $(function () {
     function integerState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
-          appendChar(action.val)
+          screen.appendChar(action.val)
           return integerState
         case ACTION.PERIOD:
-          appendChar(action.val)
+          screen.appendPeriod()
           return floatState
         case ACTION.BINARY_OP:
-          appendChar('.')
-          return makeChainState($numElem.text(), action.val)
+          screen.appendPeriod()
+          return makeChainState(screen.getNumber(), action.val)
         default:
           return integerState
       }
@@ -84,10 +161,10 @@ $(function () {
     function floatState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
-          appendChar(action.val)
+          screen.appendChar(action.val)
           return floatState
         case ACTION.BINARY_OP:
-          return makeChainState($numElem.text(), action.val)
+          return makeChainState(screen.getNumber(), action.val)
         default:
           return floatState
       }
@@ -96,23 +173,23 @@ $(function () {
     /**
      * Generator for the Chain state transition fn, a modified Start state fn in which the first
      * number in a chain has been entered.
-     * @param lhsText - LHS number string that will be used later
+     * @param currNum - Current number that will be chained next
      * @param op - Operation type
      * @returns {function} Chain state transition function
      */
-    function makeChainState (lhsText, op) {
+    function makeChainState (currNum, op) {
       function wrapWithChainingTransitions (wrappedStateFn) {
         return function (action) {
           switch (action.type) {
             // Calculate and continue chain
             case ACTION.BINARY_OP:
-              $numElem.text(calculate(lhsText, op))
-              appendPeriod()
-              return makeChainState($numElem.text(), action.val)
+              screen.printNumber(calculate(currNum, op))
+              screen.appendPeriod()
+              return makeChainState(screen.getNumber(), action.val)
             // Calculate and exit chain
             case ACTION.EQUALS:
-              $numElem.text(calculate(lhsText, op))
-              appendPeriod()
+              screen.printNumber(calculate(currNum, op))
+              screen.appendPeriod()
               return startState
             // Otherwise, delegate to wrapped fn
             default:
@@ -124,39 +201,25 @@ $(function () {
       return function chainState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            updateDisplay(action.val)
+            screen.printNumber(action.val)
             return wrapWithChainingTransitions(integerState)
           case ACTION.PERIOD:
-            $numElem.text(ZERO_TEXT)
+            screen.printNumber(0)
+            screen.appendPeriod()
             return wrapWithChainingTransitions(floatState)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
-            appendPeriod()
-            return makeChainState(lhsText, action.val)
+            screen.appendPeriod()
+            return makeChainState(currNum, action.val)
           default:
             return chainState
         }
       }
     }
 
-    function updateDisplay (number) {
-      $numElem.text(number)
-    }
 
-    function appendPeriod () {
-      var currNum = $numElem.text()
-      if (currNum.includes('.')) return
-      $numElem.text(currNum + '.')
-    }
-
-    function appendChar (char) {
-      var currNum = $numElem.text()
-      $numElem.text(currNum + char)
-    }
-
-    function calculate (lhsText, op) {
-      var lhs = parseFloat(lhsText)
-      var rhs = parseFloat($numElem.text())
+    function calculate (lhs, op) {
+      var rhs = screen.getNumber()
 
       switch (op) {
         case OP.PERCENTAGE:
@@ -176,25 +239,12 @@ $(function () {
 
     return {
       clear: function () {
-        $numElem.fadeOut(10, function () {
-          $(this).text(ZERO_TEXT)
-            .delay(100)
-            .fadeIn(10)
-        })
+        screen.clear()
         fsm.setState(startState)
       },
-
       reverseSign: function () {
-        var currNum = $numElem.text()
-
-        if (currNum === ZERO_TEXT) return
-
-        var newNum = currNum.startsWith('-')
-          ? currNum.substr(1)
-          : '-' + currNum
-        $numElem.text(newNum)
+        screen.reverseSign()
       },
-
       update: function (action) {
         fsm.transition(action)
       }
@@ -210,7 +260,7 @@ $(function () {
   })
 
   $('.period').on('click', function () {
-    Calculator.update({ type: ACTION.PERIOD, val: '.' })
+    Calculator.update({ type: ACTION.PERIOD })
   })
 
   $('.binary_op').on('click', function () {
