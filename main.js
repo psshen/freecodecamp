@@ -81,15 +81,33 @@ $(function () {
     }
 
     function printNumber (number) {
-      if (number % 1 === 0) {
-        $integer.text(number)
+      var newInteger = ''
+      var newFraction = ''
+      var newExponent = ''
+
+      var numberStr = number.toString()
+      var newIntegerNumDigits = numberStr.indexOf('.')
+
+      if (newIntegerNumDigits === -1) {
+        newInteger = numberStr
         $integer.toggleClass('decimal', false)
       }
-      else {
-        $integer.text(number / 1)
+      else if (newIntegerNumDigits > MAX_DIGITS - 1) {
+        var scientificNum = number.toExponential(MAX_DIGITS - 1)
+        newInteger = scientificNum.substring(0, 1)
         appendPeriod()
-        $fraction.text(number % 1)
+        newFraction = scientificNum.substring(1, MAX_DIGITS)
+        newExponent = parseInt(scientificNum.substring(11))
       }
+      else {
+        newInteger = parseInt(number.substring(0, newIntegerNumDigits))
+        appendPeriod()
+        newFraction = parseInt(number.substring(newIntegerNumDigits + 1, MAX_DIGITS))
+      }
+
+      $integer.text(newInteger)
+      $fraction.text(newFraction)
+      $exponent.text(newExponent)
     }
 
     function appendPeriod () {
@@ -178,6 +196,7 @@ $(function () {
      * @returns {function} Chain state transition function
      */
     function makeChainState (currNum, op) {
+
       function wrapWithChainingTransitions (wrappedStateFn) {
         return function (action) {
           switch (action.type) {
@@ -193,7 +212,7 @@ $(function () {
               return startState
             // Otherwise, delegate to wrapped fn
             default:
-              return wrappedStateFn(action)
+              return wrapWithChainingTransitions(wrappedStateFn(action))
           }
         }
       }
