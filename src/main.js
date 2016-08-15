@@ -1,4 +1,4 @@
-$(function () {
+var CalculatorApp = (function () {
   'use strict'
 
   var ACTION = {
@@ -132,11 +132,10 @@ $(function () {
   }
 
   /**
-   * Singleton controller for updating calculator view
+   * Controller for updating calculator view
    */
-  var Calculator = (function () {
+  function Calculator (screen) {
     var fsm = new FSM(startState)
-    var screen = new Screen()
 
     function startState (action) {
       switch (action.type) {
@@ -268,25 +267,39 @@ $(function () {
         fsm.transition(action)
       }
     }
-  })()
+  }
 
-  $('.clear').on('click', Calculator.clear)
+  function bindFunctions (calc) {
+    $('.clear').on('click', calc.clear)
 
-  $('.sign').on('click', Calculator.reverseSign)
+    $('.sign').on('click', calc.reverseSign)
 
-  $('.digit').on('click', function () {
-    Calculator.update({ type: ACTION.DIGIT, val: $(this).text() })
-  })
+    $('.digit').on('click', function () {
+      calc.update({ type: ACTION.DIGIT, val: $(this).text() })
+    })
 
-  $('.period').on('click', function () {
-    Calculator.update({ type: ACTION.PERIOD })
-  })
+    $('.period').on('click', function () {
+      calc.update({ type: ACTION.PERIOD }) })
 
-  $('.binary_op').on('click', function () {
-    Calculator.update({ type: ACTION.BINARY_OP, val: OP[ $(this).attr('data-optype') ] })
-  })
+    $('.binary_op').on('click', function () {
+      calc.update({ type: ACTION.BINARY_OP, val: OP[ $(this).attr('data-optype') ] })
+    })
 
-  $('.equals').on('click', function () {
-    Calculator.update({ type: ACTION.EQUALS })
-  })
-});
+    $('.equals').on('click', function () {
+      calc.update({ type: ACTION.EQUALS })
+    })
+  }
+
+  function onReady () {
+    var screen = new Screen()
+    var calc = new Calculator(screen)
+    bindFunctions(calc)
+  }
+
+  return {
+    onReady: onReady
+  }
+
+})()
+
+$(document).ready(CalculatorApp.onReady)
