@@ -23,7 +23,7 @@ var CalculatorApp = (function () {
    * @param initStateFn
    * @constructor
    */
-  function FSM (initStateFn) {
+  function FiniteStateMachine (initStateFn) {
     var currStateFn = initStateFn
 
     return {
@@ -41,12 +41,12 @@ var CalculatorApp = (function () {
    * Displays, updates, and parses current number.
    */
   function Screen () {
-    const MAX_DIGITS = 10
+    const MAX_DIGITS = 10 // Width of screen in digits
     // Split up number into components since floats and scientific numbers aren't monospace
-    var $significand = $('.screen.significand') // Group of all digits before and after decimal point
-    var $integer = $('.screen.integer')
-    var $fraction = $('.screen.fraction')
-    var $exponent = $('.screen.exponent')
+    var $significand = $('.significand') // Group of all digits before and after decimal point
+    var $integer = $('.integer')
+    var $fraction = $('.fraction')
+    var $exponent = $('.exponent')
 
     function isBlank () {
       return $significand.text() === '0' && this.isDecimal()
@@ -60,7 +60,7 @@ var CalculatorApp = (function () {
       return $significand.text().replace('-', '').length
     }
 
-    function clear () {
+    function zeroOut () {
       $fraction.text('')
       $exponent.text('')
       $integer.fadeOut(0, function () {
@@ -81,8 +81,20 @@ var CalculatorApp = (function () {
       $integer.text(newNum)
     }
 
+    function isScientific () {
+      return !$exponent
+    }
+
     function getNumber () {
-      return parseFloat($integer.text() + (isDecimal() ? ('.' + $fraction.text()) : ''))
+      var numStr = $integer.text()
+      if (isDecimal()) {
+        numStr += '.' + $fraction.text()
+      }
+      if (isScientific()) {
+        numStr += 'e+' + $exponent.text()
+      }
+
+      return parseFloat(numStr)
     }
 
     function printNumber (number) {
@@ -90,22 +102,29 @@ var CalculatorApp = (function () {
       var newFraction = ''
       var newExponent = ''
 
-      var numberStr = number.toString()
-      var newIntegerNumDigits = numberStr.indexOf('.')
+      var exponentialStr = number.toExponential()
+      var exponentIndex = exponentialStr.indexOf('e')
+      var integer = exponentialStr.substring(0, 1)
+      var fraction = exponentialStr.substring(2, exponentIndex)
+      var exponent = exponentialStr.substring(exponentIndex + 2)
 
-      if (newIntegerNumDigits === -1) {
-        newInteger = numberStr
-        $integer.toggleClass('decimal', false)
-      } else if (newIntegerNumDigits > MAX_DIGITS - 1) {
-        var scientificNum = number.toExponential(MAX_DIGITS - 1)
-        newInteger = scientificNum.substring(0, 1)
-        appendPeriod()
-        newFraction = scientificNum.substring(1, MAX_DIGITS)
-        newExponent = parseInt(scientificNum.substring(11))
+      if (exponent > MAX_DIGITS - 1) {
+        newInteger = integer
+        changeToDecimal(true)
+        newFraction = fraction.substring(0, MAX_DIGITS - 1)
+        newExponent = exponent
       } else {
-        newInteger = parseInt(number.substring(0, newIntegerNumDigits))
-        appendPeriod()
-        newFraction = parseInt(number.substring(newIntegerNumDigits + 1, MAX_DIGITS))
+        var numberStr = number.toString()
+        var decimalPointPosition = numberStr.indexOf('.')
+        if (decimalPointPosition === -1) {
+          newInteger = numberStr
+          changeToDecimal(false)
+        } else {
+          newInteger = parseInt(numberStr.substring(0, decimalPointPosition))
+          changeToDecimal(true)
+          newFraction = parseInt(numberStr.substring(decimalPointPosition + 1, MAX_DIGITS))
+          // TODO round last digit
+        }
       }
 
       $integer.text(newInteger)
@@ -113,8 +132,12 @@ var CalculatorApp = (function () {
       $exponent.text(newExponent)
     }
 
-    function appendPeriod () {
-      $integer.toggleClass('decimal', true)
+    function changeToDecimal (bool) {
+      $integer.toggleClass('decimal', bool)
+    }
+
+    function addDecimalPoint () {
+      changeToDecimal(true)
     }
 
     function appendChar (char) {
@@ -126,10 +149,10 @@ var CalculatorApp = (function () {
 
     return {
       getNumber: getNumber,
-      clear: clear,
+      clear: zeroOut,
       reverseSign: reverseSign,
       printNumber: printNumber,
-      appendPeriod: appendPeriod,
+      addDecimalPoint: addDecimalPoint,
       appendChar: appendChar
     }
   }
@@ -138,16 +161,16 @@ var CalculatorApp = (function () {
    * Controller for updating calculator view
    */
   function Calculator (screen) {
-    var fsm = new FSM(startState)
+    var fsm = new FiniteStateMachine(startState)
 
     function startState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
-          screen.printNumber(action.val)
+          screen.printNumber(parseFloat(action.val))
           return integerState
         case ACTION.PERIOD:
           screen.printNumber(0)
-          screen.appendPeriod()
+          screen.addDecimalPoint()
           return floatState
         case ACTION.BINARY_OP:
           return makeChainState(screen.getNumber(), action.val)
@@ -165,10 +188,10 @@ var CalculatorApp = (function () {
           screen.appendChar(action.val)
           return integerState
         case ACTION.PERIOD:
-          screen.appendPeriod()
+          screen.addDecimalPoint()
           return floatState
         case ACTION.BINARY_OP:
-          screen.appendPeriod()
+          screen.addDecimalPoint()
           return makeChainState(screen.getNumber(), action.val)
         default:
           return integerState
@@ -204,13 +227,13 @@ var CalculatorApp = (function () {
             // Calculate and continue chain
             case ACTION.BINARY_OP:
               screen.printNumber(calculate(currNum, op))
-              screen.appendPeriod()
+              screen.addDecimalPoint()
               // TODO conform number formatting
               return makeChainState(screen.getNumber(), action.val)
             // Calculate and exit chain
             case ACTION.EQUALS:
               screen.printNumber(calculate(currNum, op))
-              screen.appendPeriod()
+              screen.addDecimalPoint()
               // TODO conform number formatting
               return startState
             // Otherwise, delegate to wrapped fn
@@ -223,15 +246,15 @@ var CalculatorApp = (function () {
       return function chainState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            screen.printNumber(action.val)
+            screen.printNumber(parseFloat(action.val))
             return wrapWithChainingTransitions(integerState)
           case ACTION.PERIOD:
             screen.printNumber(0)
-            screen.appendPeriod()
+            screen.addDecimalPoint()
             return wrapWithChainingTransitions(floatState)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
-            screen.appendPeriod()
+            screen.addDecimalPoint()
             return makeChainState(currNum, action.val)
           default:
             return chainState
@@ -278,19 +301,68 @@ var CalculatorApp = (function () {
     $('.sign').on('click', calc.reverseSign)
 
     $('.digit').on('click', function () {
-      calc.update({ type: ACTION.DIGIT, val: $(this).text() })
+      calc.update({type: ACTION.DIGIT, val: $(this).text()})
     })
 
     $('.period').on('click', function () {
-      calc.update({ type: ACTION.PERIOD })
+      calc.update({type: ACTION.PERIOD})
     })
 
     $('.binary_op').on('click', function () {
-      calc.update({ type: ACTION.BINARY_OP, val: OP[ $(this).attr('data-optype') ] })
+      calc.update({type: ACTION.BINARY_OP, val: OP[$(this).attr('data-optype')]})
     })
 
     $('.equals').on('click', function () {
-      calc.update({ type: ACTION.EQUALS })
+      calc.update({type: ACTION.EQUALS})
+    })
+
+    window.addEventListener('keydown', function (event) {
+      if (event.defaultPrevented) {
+        return
+      }
+      switch (event.key) {
+        case 'Delete':
+        case 'c':
+          calc.clear()
+          break
+        case 'NumLock':
+          calc.reverseSign()
+          break
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+          calc.update({type: ACTION.DIGIT, val: event.key})
+          break
+        case '.':
+          calc.update({type: ACTION.PERIOD})
+          break
+        case '%':
+          calc.update({type: ACTION.BINARY_OP, val: OP.PERCENTAGE})
+          break
+        case '/':
+          calc.update({type: ACTION.BINARY_OP, val: OP.DIVIDE})
+          break
+        case '*':
+          calc.update({type: ACTION.BINARY_OP, val: OP.MULTIPLY})
+          break
+        case '-':
+          calc.update({type: ACTION.BINARY_OP, val: OP.SUBTRACT})
+          break
+        case '+':
+          calc.update({type: ACTION.BINARY_OP, val: OP.ADD})
+          break
+        case 'Enter':
+        case '=':
+          calc.update({type: ACTION.EQUALS})
+          break
+      }
     })
   }
 
