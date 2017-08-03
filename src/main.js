@@ -28,6 +28,7 @@ var CalculatorApp = (function () {
 
     return {
       transition: function (action) {
+        console.log('Transition from state: ' + currStateFn.name)
         this.setState(currStateFn(action))
       },
 
@@ -43,13 +44,14 @@ var CalculatorApp = (function () {
   function Screen () {
     const MAX_DIGITS = 10 // Width of screen in digits
     // Split up number into components since floats and scientific numbers aren't monospace
+    var $number = $('.number')
     var $significand = $('.significand') // Group of all digits before and after decimal point
     var $integer = $('.integer')
     var $fraction = $('.fraction')
     var $exponent = $('.exponent')
 
     function isBlank () {
-      return $significand.text() === '0' && this.isDecimal()
+      return $significand.text().trim() === '0' && this.isDecimal()
     }
 
     function isDecimal () {
@@ -57,7 +59,7 @@ var CalculatorApp = (function () {
     }
 
     function numDigits () {
-      return $significand.text().replace('-', '').length
+      return $significand.text().trim().replace('-', '').length
     }
 
     function zeroOut () {
@@ -69,6 +71,10 @@ var CalculatorApp = (function () {
           .delay(100)
           .fadeIn(0)
       })
+    }
+
+    function blink () {
+      $number.fadeOut(0).delay(10).fadeIn(0)
     }
 
     function reverseSign () {
@@ -86,15 +92,17 @@ var CalculatorApp = (function () {
     }
 
     function getNumber () {
-      var numStr = $integer.text()
+      var numStr = $integer.text().trim()
       if (isDecimal()) {
-        numStr += '.' + $fraction.text()
+        numStr += '.' + $fraction.text().trim()
       }
       if (isScientific()) {
-        numStr += 'e+' + $exponent.text()
+        numStr += 'e+' + $exponent.text().trim()
       }
 
-      return parseFloat(numStr)
+      var number = parseFloat(numStr)
+      console.log('Parsed: ' + number)
+      return number
     }
 
     function printNumber (number) {
@@ -150,6 +158,7 @@ var CalculatorApp = (function () {
     return {
       getNumber: getNumber,
       zeroOut: zeroOut,
+      blink: blink,
       reverseSign: reverseSign,
       printNumber: printNumber,
       changeToDecimal: changeToDecimal,
@@ -227,8 +236,8 @@ var CalculatorApp = (function () {
      * @returns {function} Chain state transition function
      */
     function makeChainState (currNum, op) {
-      function wrapWithChainingTransitions (wrappedStateFn) {
-        return function (action) {
+      function addChainStateTransitionsTo (wrappedStateFn) {
+        return function modifiedStateWithChaining (action) {
           switch (action.type) {
             // Calculate and continue chain
             case ACTION.BINARY_OP:
@@ -242,9 +251,9 @@ var CalculatorApp = (function () {
               screen.addDecimalPoint()
               // TODO conform number formatting
               return startState
-            // Otherwise, delegate to wrapped fn
+            // Otherwise, delegate to wrapped state fn
             default:
-              return wrapWithChainingTransitions(wrappedStateFn(action))
+              return addChainStateTransitionsTo(wrappedStateFn(action))
           }
         }
       }
@@ -253,11 +262,11 @@ var CalculatorApp = (function () {
         switch (action.type) {
           case ACTION.DIGIT:
             screen.printNumber(parseFloat(action.val))
-            return wrapWithChainingTransitions(integerState)
+            return addChainStateTransitionsTo(integerState)
           case ACTION.PERIOD:
             screen.printNumber(0)
             screen.addDecimalPoint()
-            return wrapWithChainingTransitions(floatState)
+            return addChainStateTransitionsTo(floatState)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
             screen.addDecimalPoint()
@@ -294,9 +303,11 @@ var CalculatorApp = (function () {
       },
       reverseSign: function () {
         screen.reverseSign()
+        screen.blink()
       },
       update: function (action) {
         fsm.transition(action)
+        screen.blink()
       }
     }
   }
@@ -322,7 +333,7 @@ var CalculatorApp = (function () {
       calc.update({type: ACTION.EQUALS})
     })
 
-    window.addEventListener('keydown', function (event) {
+    window.addEventListener('keypress', function (event) {
       if (event.defaultPrevented) {
         return
       }
