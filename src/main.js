@@ -149,9 +149,10 @@ var CalculatorApp = (function () {
 
     return {
       getNumber: getNumber,
-      clear: zeroOut,
+      zeroOut: zeroOut,
       reverseSign: reverseSign,
       printNumber: printNumber,
+      changeToDecimal: changeToDecimal,
       addDecimalPoint: addDecimalPoint,
       appendChar: appendChar
     }
@@ -166,6 +167,11 @@ var CalculatorApp = (function () {
     function startState (action) {
       switch (action.type) {
         case ACTION.DIGIT:
+          if (action.val === '0') {
+            screen.printNumber(0)
+            screen.changeToDecimal(false)
+            return startState
+          }
           screen.printNumber(parseFloat(action.val))
           return integerState
         case ACTION.PERIOD:
@@ -283,7 +289,7 @@ var CalculatorApp = (function () {
 
     return {
       clear: function () {
-        screen.clear()
+        screen.zeroOut()
         fsm.setState(startState)
       },
       reverseSign: function () {
