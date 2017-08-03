@@ -19,33 +19,37 @@ var CalculatorApp = (function () {
 
   /**
    * Finite state machine that maintains a single state transition fn at a time that handles
-   * transitions to other states.
-   * @param initState
+   * transitions to the next state given some action.
+   * @param initStateFn
    * @constructor
    */
-  function FSM (initState) {
-    var currState = initState
+  function FSM (initStateFn) {
+    var currStateFn = initStateFn
 
     return {
       transition: function (action) {
-        this.setState(currState(action))
+        this.setState(currStateFn(action))
       },
 
-      setState: function (newState) {
-        currState = newState
+      setState: function (newStateFn) {
+        currStateFn = newStateFn
       }
     }
   }
 
+  /**
+   * Displays, updates, and parses current number.
+   */
   function Screen () {
     const MAX_DIGITS = 10
-    var $significand = $('.significand')
-    var $integer = $('.integer')
-    var $fraction = $('.fraction')
-    var $exponent = $('.exponent')
+    // Split up number into components since floats and scientific numbers aren't monospace
+    var $significand = $('.screen.significand') // Group of all digits before and after decimal point
+    var $integer = $('.screen.integer')
+    var $fraction = $('.screen.fraction')
+    var $exponent = $('.screen.exponent')
 
     function isBlank () {
-      return $significand.text() === '0' && $('.screen.integer').hasClass('decimal')
+      return $significand.text() === '0' && this.isDecimal()
     }
 
     function isDecimal () {
@@ -78,7 +82,7 @@ var CalculatorApp = (function () {
     }
 
     function getNumber () {
-      return parseFloat($integer.text() + (isDecimal() ? '.' : '') + $fraction.text())
+      return parseFloat($integer.text() + (isDecimal() ? ('.' + $fraction.text()) : ''))
     }
 
     function printNumber (number) {
@@ -116,8 +120,8 @@ var CalculatorApp = (function () {
     function appendChar (char) {
       if (numDigits() === MAX_DIGITS) return
 
-      var part = isDecimal() ? $fraction : $integer
-      part.text(part.text() + char)
+      var lastPart = isDecimal() ? $fraction : $integer
+      lastPart.text(lastPart.text() + char)
     }
 
     return {
@@ -201,11 +205,13 @@ var CalculatorApp = (function () {
             case ACTION.BINARY_OP:
               screen.printNumber(calculate(currNum, op))
               screen.appendPeriod()
+              // TODO conform number formatting
               return makeChainState(screen.getNumber(), action.val)
             // Calculate and exit chain
             case ACTION.EQUALS:
               screen.printNumber(calculate(currNum, op))
               screen.appendPeriod()
+              // TODO conform number formatting
               return startState
             // Otherwise, delegate to wrapped fn
             default:
