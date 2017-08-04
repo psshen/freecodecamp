@@ -6,7 +6,8 @@ var CalculatorApp = (function () {
     DIGIT: 0,
     PERIOD: 1,
     BINARY_OP: 2,
-    EQUALS: 3
+    EQUALS: 3,
+    REVERSE_SIGN: 4
   }
 
   var OP = {
@@ -51,7 +52,7 @@ var CalculatorApp = (function () {
     var $exponent = $('.exponent')
 
     function isBlank () {
-      return $significand.text().trim() === '0' && this.isDecimal()
+      return $significand.text().trim() === '0' && isDecimal()
     }
 
     function isDecimal () {
@@ -101,7 +102,7 @@ var CalculatorApp = (function () {
       }
 
       var number = parseFloat(numStr)
-      console.log('Parsed: ' + number)
+      // console.log('Parsed: ' + number)
       return number
     }
 
@@ -179,9 +180,10 @@ var CalculatorApp = (function () {
           if (action.val === '0') {
             screen.printNumber(0)
             screen.changeToDecimal(false)
-            return startState
+            return zeroState
           }
           screen.printNumber(parseFloat(action.val))
+          screen.changeToDecimal(false)
           return integerState
         case ACTION.PERIOD:
           screen.printNumber(0)
@@ -192,6 +194,13 @@ var CalculatorApp = (function () {
         default:
           return startState
       }
+    }
+
+    function zeroState (action) {
+      if (action.DIGIT && action.val === '0') {
+        return zeroState
+      }
+      return startState(action)
     }
 
     /**
@@ -241,15 +250,15 @@ var CalculatorApp = (function () {
           switch (action.type) {
             // Calculate and continue chain
             case ACTION.BINARY_OP:
+              // TODO check for overflow
               screen.printNumber(calculate(currNum, op))
               screen.addDecimalPoint()
-              // TODO conform number formatting
               return makeChainState(screen.getNumber(), action.val)
             // Calculate and exit chain
             case ACTION.EQUALS:
+              // TODO check for overflow
               screen.printNumber(calculate(currNum, op))
               screen.addDecimalPoint()
-              // TODO conform number formatting
               return startState
             // Otherwise, delegate to wrapped state fn
             default:
@@ -261,7 +270,13 @@ var CalculatorApp = (function () {
       return function chainState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
+            if (action.val === '0') {
+              screen.printNumber(0)
+              screen.changeToDecimal(false)
+              return addChainStateTransitionsTo(zeroState)
+            }
             screen.printNumber(parseFloat(action.val))
+            screen.changeToDecimal(false)
             return addChainStateTransitionsTo(integerState)
           case ACTION.PERIOD:
             screen.printNumber(0)
@@ -271,6 +286,8 @@ var CalculatorApp = (function () {
           case ACTION.BINARY_OP:
             screen.addDecimalPoint()
             return makeChainState(currNum, action.val)
+          case ACTION.EQUALS:
+            return startState
           default:
             return chainState
         }
@@ -315,7 +332,7 @@ var CalculatorApp = (function () {
   function bindFunctions (calc) {
     $('.clear').on('click', calc.clear)
 
-    $('.sign').on('click', calc.reverseSign)
+    $('.sign').on('click', calc.update(ACTION.REVERSE_SIGN))
 
     $('.digit').on('click', function () {
       calc.update({type: ACTION.DIGIT, val: $(this).text()})
@@ -337,13 +354,14 @@ var CalculatorApp = (function () {
       if (event.defaultPrevented) {
         return
       }
+      console.log('Pressed key: ' + event.key)
       switch (event.key) {
         case 'Delete':
         case 'c':
           calc.clear()
           break
         case 'NumLock':
-          calc.reverseSign()
+          calc.update(ACTION.REVERSE_SIGN)
           break
         case '0':
         case '1':
