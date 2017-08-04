@@ -129,10 +129,14 @@ var CalculatorApp = (function () {
           newInteger = numberStr
           changeToDecimal(false)
         } else {
-          newInteger = parseInt(numberStr.substring(0, decimalPointPosition))
+          newInteger = numberStr.substring(0, decimalPointPosition)
           changeToDecimal(true)
-          newFraction = parseInt(numberStr.substring(decimalPointPosition + 1, MAX_DIGITS))
-          // TODO round last digit
+          newFraction = numberStr.substring(decimalPointPosition + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
+          // Round first digit past the end of the screen
+          var digitAfterLast = numberStr.charAt(MAX_DIGITS + 1)
+          if (digitAfterLast && digitAfterLast > 5) {
+            newFraction = newFraction.slice(0, -1) + (parseInt(newFraction.charAt(newFraction.length - 1)) + 1)
+          }
         }
       }
 
