@@ -1,6 +1,7 @@
 /* eslint-env jquery */
 var CalculatorApp = (function () {
   'use strict'
+  const MAX_DIGITS = 10 // Width of screen in digits
 
   var ACTION = {
     DIGIT: 0,
@@ -43,7 +44,6 @@ var CalculatorApp = (function () {
    * Displays, updates, and parses current number.
    */
   function Screen () {
-    const MAX_DIGITS = 10 // Width of screen in digits
     // Split up number into components since floats and scientific numbers aren't monospace
     var $number = $('.number')
     var $significand = $('.significand') // Group of all digits before and after decimal point
@@ -57,10 +57,6 @@ var CalculatorApp = (function () {
 
     function isDecimal () {
       return $integer.hasClass('decimal')
-    }
-
-    function numDigits () {
-      return $significand.text().trim().replace('-', '').length
     }
 
     function zeroOut () {
@@ -88,30 +84,70 @@ var CalculatorApp = (function () {
       $integer.text(newNum)
     }
 
-    function isScientific () {
-      return !$exponent
-    }
-
-    function getNumber () {
-      var numStr = $integer.text().trim()
-      if (isDecimal()) {
-        numStr += '.' + $fraction.text().trim()
-      }
-      if (isScientific()) {
-        numStr += 'e+' + $exponent.text().trim()
-      }
-
-      var number = parseFloat(numStr)
-      // console.log('Parsed: ' + number)
-      return number
-    }
-
     function printNumber (number) {
+      changeToDecimal(number.isDecimal())
+      var {integer, fraction, exponent} = number.toPrintable()
+
+      $integer.text(integer)
+      $fraction.text(fraction)
+      $exponent.text(exponent)
+    }
+
+    function changeToDecimal (bool) {
+      $integer.toggleClass('decimal', bool)
+    }
+
+    return {
+      zeroOut: zeroOut,
+      blink: blink,
+      reverseSign: reverseSign,
+      printNumber: printNumber
+    }
+  }
+
+  function CalcNumber (initNum, initIsDecimal) {
+    var num = initNum
+    var str = initNum.toString()
+    var isDecimalNum = initIsDecimal || false
+
+    function numDigits () {
+      return str.replace('.', '').length
+    }
+
+    function appendChar (ch) {
+      if (numDigits() === MAX_DIGITS) {
+        return false
+      }
+
+      str += ch
+      num = parseFloat(str)
+
+      return true
+    }
+
+    function reverseSign () {
+      str = '-' + str
+      num = -num
+    }
+
+    function setDecimal (newIsDecimal) {
+      isDecimalNum = newIsDecimal
+    }
+
+    function isDecimal () {
+      return isDecimalNum
+    }
+
+    function toNumber () {
+      return num
+    }
+
+    function toPrintable () {
       var newInteger = ''
       var newFraction = ''
       var newExponent = ''
 
-      var exponentialStr = number.toExponential()
+      var exponentialStr = num.toExponential()
       var exponentIndex = exponentialStr.indexOf('e')
       var integer = exponentialStr.substring(0, 1)
       var fraction = exponentialStr.substring(2, exponentIndex)
@@ -119,18 +155,18 @@ var CalculatorApp = (function () {
 
       if (exponent > MAX_DIGITS - 1) {
         newInteger = integer
-        changeToDecimal(true)
+        setDecimal(true)
         newFraction = fraction.substring(0, MAX_DIGITS - 1)
         newExponent = exponent
       } else {
-        var numberStr = number.toString()
+        var numberStr = num.toString()
         var decimalPointPosition = numberStr.indexOf('.')
         if (decimalPointPosition === -1) {
           newInteger = numberStr
-          changeToDecimal(false)
+          setDecimal(false)
         } else {
           newInteger = numberStr.substring(0, decimalPointPosition)
-          changeToDecimal(true)
+          setDecimal(true)
           newFraction = numberStr.substring(decimalPointPosition + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
           // Round first digit past the end of the screen
           var digitAfterLast = numberStr.charAt(MAX_DIGITS + 1)
@@ -139,36 +175,43 @@ var CalculatorApp = (function () {
           }
         }
       }
-
-      $integer.text(newInteger)
-      $fraction.text(newFraction)
-      $exponent.text(newExponent)
+      return {
+        integer: newInteger,
+        fraction: newFraction,
+        exponent: newExponent
+      }
     }
 
-    function changeToDecimal (bool) {
-      $integer.toggleClass('decimal', bool)
-    }
-
-    function addDecimalPoint () {
-      changeToDecimal(true)
-    }
-
-    function appendChar (char) {
-      if (numDigits() === MAX_DIGITS) return
-
-      var lastPart = isDecimal() ? $fraction : $integer
-      lastPart.text(lastPart.text() + char)
+    function calculate (other, op) {
+      let lhs = toNumber()
+      other = other.toNumber()
+      let result = (function () {
+        switch (op) {
+          case OP.PERCENTAGE:
+            return lhs / 100 * other
+          case OP.DIVIDE:
+            return lhs / other
+          case OP.MULTIPLY:
+            return lhs * other
+          case OP.SUBTRACT:
+            return lhs - other
+          case OP.ADD:
+            return lhs + other
+          default:
+            return 0
+        }
+      })()
+      return CalcNumber(result, true)
     }
 
     return {
-      getNumber: getNumber,
-      zeroOut: zeroOut,
-      blink: blink,
+      appendChar: appendChar,
       reverseSign: reverseSign,
-      printNumber: printNumber,
-      changeToDecimal: changeToDecimal,
-      addDecimalPoint: addDecimalPoint,
-      appendChar: appendChar
+      setDecimal: setDecimal,
+      toNumber: toNumber,
+      isDecimal: isDecimal,
+      toPrintable: toPrintable,
+      calculate: calculate
     }
   }
 
@@ -176,151 +219,183 @@ var CalculatorApp = (function () {
    * Controller for updating calculator view
    */
   function Calculator (screen) {
-    var fsm = new FiniteStateMachine(startState)
+    var fsm = new FiniteStateMachine(startStateGen(CalcNumber(0, true)))
 
-    function startState (action) {
-      switch (action.type) {
-        case ACTION.DIGIT:
-          if (action.val === '0') {
-            screen.printNumber(0)
-            screen.changeToDecimal(false)
-            return zeroState
-          }
-          screen.printNumber(parseFloat(action.val))
-          screen.changeToDecimal(false)
-          return integerState
-        case ACTION.PERIOD:
-          screen.printNumber(0)
-          screen.addDecimalPoint()
-          return floatState
-        case ACTION.BINARY_OP:
-          return makeChainState(screen.getNumber(), action.val)
-        default:
-          return startState
+    function startStateGen (num) {
+      return function startState (action) {
+        switch (action.type) {
+          case ACTION.DIGIT:
+            num = CalcNumber(parseInt(action.val), false)
+            screen.printNumber(num)
+            if (action.val === '0') {
+              return zeroStateGen(num)
+            } else {
+              return integerStateGen(num)
+            }
+          case ACTION.PERIOD:
+            num = CalcNumber(0, true)
+            screen.printNumber(num)
+            return floatStateGen(num)
+          case ACTION.BINARY_OP:
+            return chainStateGen(num, action.val)
+          default:
+            return startState
+        }
       }
     }
 
-    function zeroState (action) {
-      if (action.DIGIT && action.val === '0') {
-        return zeroState
+    function zeroStateGen (num) {
+      return function zeroState (action) {
+        if (action.DIGIT && action.val === '0') {
+          return zeroStateGen
+        }
+        return startStateGen(num)
       }
-      return startState(action)
     }
 
     /**
      * Number displayed on screen is an integer
      */
-    function integerState (action) {
-      switch (action.type) {
-        case ACTION.DIGIT:
-          screen.appendChar(action.val)
-          return integerState
-        case ACTION.PERIOD:
-          screen.addDecimalPoint()
-          return floatState
-        case ACTION.BINARY_OP:
-          screen.addDecimalPoint()
-          return makeChainState(screen.getNumber(), action.val)
-        default:
-          return integerState
+    function integerStateGen (num) {
+      return function integerState (action) {
+        switch (action.type) {
+          case ACTION.DIGIT:
+            num.appendChar(action.val)
+            screen.printNumber(num)
+            return integerStateGen(num)
+          case ACTION.PERIOD:
+            num.setDecimal(true)
+            screen.printNumber(num)
+            return floatStateGen(num)
+          case ACTION.BINARY_OP:
+            num.setDecimal(true)
+            screen.printNumber(num)
+            return chainStateGen(num, action.val)
+          default:
+            return integerState
+        }
       }
     }
 
     /**
      * Number displayed on screen is floating point
      */
-    function floatState (action) {
-      switch (action.type) {
-        case ACTION.DIGIT:
-          screen.appendChar(action.val)
-          return floatState
-        case ACTION.BINARY_OP:
-          return makeChainState(screen.getNumber(), action.val)
-        default:
-          return floatState
+    function floatStateGen (num) {
+      return function floatState (action) {
+        switch (action.type) {
+          case ACTION.DIGIT:
+            num.appendChar(action.val)
+            screen.printNumber(num)
+            return floatStateGen(num)
+          case ACTION.BINARY_OP:
+            return chainStateGen(num, action.val)
+          default:
+            return floatState
+        }
       }
     }
 
     /**
      * Generator for the Chain state transition fn, a modified Start state fn in which the first
      * number in a chain has been entered.
-     * @param currNum - Current number that will be chained next
+     * @param lhsNum - Number passed into the chain that will be used as LHS value on next operation
      * @param op - Operation type
      * @returns {function} Chain state transition function
      */
-    function makeChainState (currNum, op) {
-      function addChainStateTransitionsTo (wrappedStateFn) {
-        return function modifiedStateWithChaining (action) {
+    function chainStateGen (lhsNum, op) {
+      function calculateAndContinue (lhsNum, rhsNum, action, defaultFn) {
+        // TODO check for overflow
+        var result = lhsNum.calculate(rhsNum, op)
+        screen.printNumber(result)
+        switch (action.type) {
+          // Calculate and continue chain
+          case ACTION.BINARY_OP:
+            return chainStateGen(result, action.val)
+          // Calculate and exit chain
+          case ACTION.EQUALS:
+            return startStateGen(result)
+          default:
+            return defaultFn
+        }
+      }
+
+      /**
+       * Number displayed on screen is an integer
+       */
+      function integerStateChainedGen (num) {
+        return function integerStateChained (action) {
           switch (action.type) {
-            // Calculate and continue chain
-            case ACTION.BINARY_OP:
-              // TODO check for overflow
-              screen.printNumber(calculate(currNum, op))
-              screen.addDecimalPoint()
-              return makeChainState(screen.getNumber(), action.val)
-            // Calculate and exit chain
-            case ACTION.EQUALS:
-              // TODO check for overflow
-              screen.printNumber(calculate(currNum, op))
-              screen.addDecimalPoint()
-              return startState
-            // Otherwise, delegate to wrapped state fn
+            case ACTION.DIGIT:
+              num.appendChar(action.val)
+              screen.printNumber(num)
+              return integerStateChainedGen(num)
+            case ACTION.PERIOD:
+              num.setDecimal(true)
+              screen.printNumber(num)
+              return floatStateChainedGen(num)
             default:
-              return addChainStateTransitionsTo(wrappedStateFn(action))
+              return calculateAndContinue(lhsNum, num, action, integerStateChained)
           }
         }
       }
 
-      return function chainState (action) {
+      /**
+       * Number displayed on screen is floating point
+       */
+      function floatStateChainedGen (num) {
+        return function floatStateChained (action) {
+          switch (action.type) {
+            case ACTION.DIGIT:
+              num.appendChar(action.val)
+              screen.printNumber(num)
+              return floatStateChainedGen(num)
+            default:
+              return calculateAndContinue(lhsNum, num, action, floatStateChained)
+          }
+        }
+      }
+
+      function zeroStateChainedGen () {
+        return function zeroStateChained (action) {
+          if (action.DIGIT && action.val === '0') {
+            return zeroStateChained
+          }
+          return chainState
+        }
+      }
+
+      function chainState (action) {
+        var num
         switch (action.type) {
           case ACTION.DIGIT:
+            num = CalcNumber(parseInt(action.val), false)
+            screen.printNumber(num)
             if (action.val === '0') {
-              screen.printNumber(0)
-              screen.changeToDecimal(false)
-              return addChainStateTransitionsTo(zeroState)
+              return zeroStateChainedGen()
+            } else {
+              return integerStateChainedGen(num)
             }
-            screen.printNumber(parseFloat(action.val))
-            screen.changeToDecimal(false)
-            return addChainStateTransitionsTo(integerState)
           case ACTION.PERIOD:
-            screen.printNumber(0)
-            screen.addDecimalPoint()
-            return addChainStateTransitionsTo(floatState)
+            num = CalcNumber(0, true)
+            screen.printNumber(num)
+            return floatStateChainedGen(num)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
-            screen.addDecimalPoint()
-            return makeChainState(currNum, action.val)
+            return chainStateGen(lhsNum, action.val)
           case ACTION.EQUALS:
-            return startState
+            return startStateGen(lhsNum)
           default:
             return chainState
         }
       }
-    }
 
-    function calculate (lhs, op) {
-      var rhs = screen.getNumber()
-
-      switch (op) {
-        case OP.PERCENTAGE:
-          return lhs / 100 * rhs
-        case OP.DIVIDE:
-          return lhs / rhs
-        case OP.MULTIPLY:
-          return lhs * rhs
-        case OP.SUBTRACT:
-          return lhs - rhs
-        case OP.ADD:
-          return lhs + rhs
-        default:
-          return 0
-      }
+      return chainState
     }
 
     return {
       clear: function () {
         screen.zeroOut()
-        fsm.setState(startState)
+        fsm.setState(startStateGen(CalcNumber(0, true)))
       },
       reverseSign: function () {
         screen.reverseSign()
@@ -328,6 +403,7 @@ var CalculatorApp = (function () {
       },
       update: function (action) {
         fsm.transition(action)
+        // TODO move blink calls to printNumber
         screen.blink()
       }
     }
