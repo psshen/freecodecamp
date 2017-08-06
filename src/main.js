@@ -43,13 +43,14 @@ var CalculatorApp = (function () {
   /**
    * Displays, updates, and parses current number.
    */
-  function Screen () {
+  function Screen (initNumber) {
     // Split up number into components since floats and scientific numbers aren't monospace
     var $number = $('.number')
     var $significand = $('.significand') // Group of all digits before and after decimal point
     var $integer = $('.integer')
     var $fraction = $('.fraction')
     var $exponent = $('.exponent')
+    var number = initNumber
 
     function isBlank () {
       return $significand.text().trim() === '0' && isDecimal()
@@ -84,13 +85,19 @@ var CalculatorApp = (function () {
       $integer.text(newNum)
     }
 
-    function printNumber (number) {
+    function printNumber () {
       changeToDecimal(number.isDecimal())
       var {integer, fraction, exponent} = number.toPrintable()
 
       $integer.text(integer)
       $fraction.text(fraction)
       $exponent.text(exponent)
+
+      blink()
+    }
+
+    function loadNumber (newNumber) {
+      number = newNumber
     }
 
     function changeToDecimal (bool) {
@@ -99,8 +106,8 @@ var CalculatorApp = (function () {
 
     return {
       zeroOut: zeroOut,
-      blink: blink,
       reverseSign: reverseSign,
+      loadNumber: loadNumber,
       printNumber: printNumber
     }
   }
@@ -226,7 +233,7 @@ var CalculatorApp = (function () {
         switch (action.type) {
           case ACTION.DIGIT:
             num = CalcNumber(parseInt(action.val), false)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             if (action.val === '0') {
               return zeroStateGen(num)
             } else {
@@ -234,7 +241,7 @@ var CalculatorApp = (function () {
             }
           case ACTION.PERIOD:
             num = CalcNumber(0, true)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             return floatStateGen(num)
           case ACTION.BINARY_OP:
             return chainStateGen(num, action.val)
@@ -261,15 +268,15 @@ var CalculatorApp = (function () {
         switch (action.type) {
           case ACTION.DIGIT:
             num.appendChar(action.val)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             return integerStateGen(num)
           case ACTION.PERIOD:
             num.setDecimal(true)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             return floatStateGen(num)
           case ACTION.BINARY_OP:
             num.setDecimal(true)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             return chainStateGen(num, action.val)
           default:
             return integerState
@@ -285,7 +292,7 @@ var CalculatorApp = (function () {
         switch (action.type) {
           case ACTION.DIGIT:
             num.appendChar(action.val)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             return floatStateGen(num)
           case ACTION.BINARY_OP:
             return chainStateGen(num, action.val)
@@ -306,7 +313,7 @@ var CalculatorApp = (function () {
       function calculateAndContinue (lhsNum, rhsNum, action, defaultFn) {
         // TODO check for overflow
         var result = lhsNum.calculate(rhsNum, op)
-        screen.printNumber(result)
+        screen.loadNumber(result)
         switch (action.type) {
           // Calculate and continue chain
           case ACTION.BINARY_OP:
@@ -327,11 +334,11 @@ var CalculatorApp = (function () {
           switch (action.type) {
             case ACTION.DIGIT:
               num.appendChar(action.val)
-              screen.printNumber(num)
+              screen.loadNumber(num)
               return integerStateChainedGen(num)
             case ACTION.PERIOD:
               num.setDecimal(true)
-              screen.printNumber(num)
+              screen.loadNumber(num)
               return floatStateChainedGen(num)
             default:
               return calculateAndContinue(lhsNum, num, action, integerStateChained)
@@ -347,7 +354,7 @@ var CalculatorApp = (function () {
           switch (action.type) {
             case ACTION.DIGIT:
               num.appendChar(action.val)
-              screen.printNumber(num)
+              screen.loadNumber(num)
               return floatStateChainedGen(num)
             default:
               return calculateAndContinue(lhsNum, num, action, floatStateChained)
@@ -369,7 +376,7 @@ var CalculatorApp = (function () {
         switch (action.type) {
           case ACTION.DIGIT:
             num = CalcNumber(parseInt(action.val), false)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             if (action.val === '0') {
               return zeroStateChainedGen()
             } else {
@@ -377,7 +384,7 @@ var CalculatorApp = (function () {
             }
           case ACTION.PERIOD:
             num = CalcNumber(0, true)
-            screen.printNumber(num)
+            screen.loadNumber(num)
             return floatStateChainedGen(num)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
@@ -394,17 +401,15 @@ var CalculatorApp = (function () {
 
     return {
       clear: function () {
-        screen.zeroOut()
         fsm.setState(startStateGen(CalcNumber(0, true)))
+        screen.zeroOut()
       },
       reverseSign: function () {
         screen.reverseSign()
-        screen.blink()
       },
       update: function (action) {
         fsm.transition(action)
-        // TODO move blink calls to printNumber
-        screen.blink()
+        screen.printNumber()
       }
     }
   }
@@ -482,14 +487,13 @@ var CalculatorApp = (function () {
   }
 
   function onReady () {
-    var screen = new Screen()
+    var screen = new Screen(CalcNumber(0, true))
     var calc = new Calculator(screen)
     bindFunctions(calc)
   }
 
   return {
-    onReady: onReady,
-    Screen: Screen
+    onReady: onReady
   }
 })()
 
