@@ -46,19 +46,10 @@ var CalculatorApp = (function () {
   function Screen (initNumber) {
     // Split up number into components since floats and scientific numbers aren't monospace
     var $number = $('.number')
-    var $significand = $('.significand') // Group of all digits before and after decimal point
     var $integer = $('.integer')
     var $fraction = $('.fraction')
     var $exponent = $('.exponent')
     var number = initNumber
-
-    function isBlank () {
-      return $significand.text().trim() === '0' && isDecimal()
-    }
-
-    function isDecimal () {
-      return $integer.hasClass('decimal')
-    }
 
     function zeroOut () {
       $fraction.text('')
@@ -75,21 +66,11 @@ var CalculatorApp = (function () {
       $number.fadeOut(0).delay(10).fadeIn(0)
     }
 
-    function reverseSign () {
-      if (isBlank()) return
-
-      var currInt = $integer.text()
-      var newNum = currInt.startsWith('-')
-        ? currInt.substr(1)
-        : '-' + currInt
-      $integer.text(newNum)
-    }
-
     function printNumber () {
       changeToDecimal(number.isDecimal())
-      var {integer, fraction, exponent} = number.toPrintable()
+      var {integer, fraction, exponent, isNegative} = number.toPrintable()
 
-      $integer.text(integer)
+      $integer.text((isNegative ? '-' : '') + integer)
       $fraction.text(fraction)
       $exponent.text(exponent)
 
@@ -106,7 +87,6 @@ var CalculatorApp = (function () {
 
     return {
       zeroOut: zeroOut,
-      reverseSign: reverseSign,
       loadNumber: loadNumber,
       printNumber: printNumber
     }
@@ -115,7 +95,9 @@ var CalculatorApp = (function () {
   function CalcNumber (initNum, initIsDecimal) {
     var num = initNum
     var str = initNum.toString()
-    var isDecimalNum = initIsDecimal || false
+    var isDecimalNum = false
+    setDecimal(initIsDecimal)
+    var isNegative = false
 
     function numDigits () {
       return str.replace('.', '').length
@@ -133,11 +115,13 @@ var CalculatorApp = (function () {
     }
 
     function reverseSign () {
+      isNegative = !isNegative
       str = '-' + str
       num = -num
     }
 
     function setDecimal (newIsDecimal) {
+      str += '.'
       isDecimalNum = newIsDecimal
     }
 
@@ -160,21 +144,24 @@ var CalculatorApp = (function () {
       var fraction = exponentialStr.substring(2, exponentIndex)
       var exponent = exponentialStr.substring(exponentIndex + 2)
 
-      if (exponent > MAX_DIGITS - 1) {
+      let exponentNum = parseInt(exponent)
+      // Number can't fit on screen
+      if (exponentNum >= MAX_DIGITS || exponentNum <= -(MAX_DIGITS - 1)) {
         newInteger = integer
-        setDecimal(true)
+        // TODO pass isDecimal in return value?
+        // setDecimal(true)
         newFraction = fraction.substring(0, MAX_DIGITS - 1)
         newExponent = exponent
       } else {
         var numberStr = num.toString()
-        var decimalPointPosition = numberStr.indexOf('.')
-        if (decimalPointPosition === -1) {
+        var decimalPointIndex = numberStr.indexOf('.')
+        if (decimalPointIndex === -1) {
           newInteger = numberStr
-          setDecimal(false)
+          // setDecimal(false)
         } else {
-          newInteger = numberStr.substring(0, decimalPointPosition)
-          setDecimal(true)
-          newFraction = numberStr.substring(decimalPointPosition + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
+          newInteger = numberStr.substring(0, decimalPointIndex)
+          // setDecimal(true)
+          newFraction = numberStr.substring(decimalPointIndex + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
           // Round first digit past the end of the screen
           var digitAfterLast = numberStr.charAt(MAX_DIGITS + 1)
           if (digitAfterLast && digitAfterLast > 5) {
@@ -185,7 +172,8 @@ var CalculatorApp = (function () {
       return {
         integer: newInteger,
         fraction: newFraction,
-        exponent: newExponent
+        exponent: newExponent,
+        isNegative: isNegative
       }
     }
 
@@ -244,19 +232,47 @@ var CalculatorApp = (function () {
             screen.loadNumber(num)
             return floatStateGen(num)
           case ACTION.BINARY_OP:
+            screen.loadNumber(num)
             return chainStateGen(num, action.val)
+          case ACTION.REVERSE_SIGN:
+            if (num.toNumber() === 0) {
+              return startState
+            }
+            num.reverseSign()
+            screen.loadNumber(num)
+            return startStateGen(num)
           default:
             return startState
         }
       }
     }
 
+    // TODO add explicit transitions
     function zeroStateGen (num) {
       return function zeroState (action) {
-        if (action.DIGIT && action.val === '0') {
-          return zeroStateGen
+        switch (action.type) {
+          case ACTION.DIGIT:
+            num = CalcNumber(parseInt(action.val), false)
+            screen.loadNumber(num)
+            if (action.val === '0') {
+              return zeroState
+            } else {
+              return integerStateGen(num)
+            }
+          case ACTION.PERIOD:
+            num = CalcNumber(0, true)
+            screen.loadNumber(num)
+            return floatStateGen(num)
+          case ACTION.BINARY_OP:
+            screen.loadNumber(num)
+            return chainStateGen(num, action.val)
+          case ACTION.REVERSE_SIGN:
+            num.reverseSign()
+            screen.loadNumber(num)
+            return zeroStateGen(num)
+          default:
+            return zeroState
         }
-        return startStateGen(num)
       }
     }
 
@@ -278,6 +294,10 @@ var CalculatorApp = (function () {
             num.setDecimal(true)
             screen.loadNumber(num)
             return chainStateGen(num, action.val)
+          case ACTION.REVERSE_SIGN:
+            num.reverseSign()
+            screen.loadNumber(num)
+            return integerStateGen(num)
           default:
             return integerState
         }
@@ -295,7 +315,12 @@ var CalculatorApp = (function () {
             screen.loadNumber(num)
             return floatStateGen(num)
           case ACTION.BINARY_OP:
+            screen.loadNumber(num)
             return chainStateGen(num, action.val)
+          case ACTION.REVERSE_SIGN:
+            num.reverseSign()
+            screen.loadNumber(num)
+            return floatStateGen(num)
           default:
             return floatState
         }
@@ -340,6 +365,10 @@ var CalculatorApp = (function () {
               num.setDecimal(true)
               screen.loadNumber(num)
               return floatStateChainedGen(num)
+            case ACTION.REVERSE_SIGN:
+              num.reverseSign()
+              screen.loadNumber(num)
+              return integerStateChainedGen(num)
             default:
               return calculateAndContinue(lhsNum, num, action, integerStateChained)
           }
@@ -356,16 +385,24 @@ var CalculatorApp = (function () {
               num.appendChar(action.val)
               screen.loadNumber(num)
               return floatStateChainedGen(num)
+            case ACTION.REVERSE_SIGN:
+              num.reverseSign()
+              screen.loadNumber(num)
+              return floatStateChainedGen(num)
             default:
               return calculateAndContinue(lhsNum, num, action, floatStateChained)
           }
         }
       }
 
-      function zeroStateChainedGen () {
+      function zeroStateChainedGen (num) {
         return function zeroStateChained (action) {
           if (action.DIGIT && action.val === '0') {
             return zeroStateChained
+          } else if (action.type === ACTION.REVERSE_SIGN) {
+            num.reverseSign()
+            screen.loadNumber(num)
+            return zeroStateChainedGen(num)
           }
           return chainState
         }
@@ -378,7 +415,7 @@ var CalculatorApp = (function () {
             num = CalcNumber(parseInt(action.val), false)
             screen.loadNumber(num)
             if (action.val === '0') {
-              return zeroStateChainedGen()
+              return zeroStateChainedGen(num)
             } else {
               return integerStateChainedGen(num)
             }
@@ -388,9 +425,15 @@ var CalculatorApp = (function () {
             return floatStateChainedGen(num)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
+            screen.loadNumber(lhsNum)
             return chainStateGen(lhsNum, action.val)
           case ACTION.EQUALS:
+            screen.loadNumber(lhsNum)
             return startStateGen(lhsNum)
+          case ACTION.REVERSE_SIGN:
+            lhsNum.reverseSign()
+            screen.loadNumber(lhsNum)
+            return chainStateGen(lhsNum, op)
           default:
             return chainState
         }
@@ -404,9 +447,6 @@ var CalculatorApp = (function () {
         fsm.setState(startStateGen(CalcNumber(0, true)))
         screen.zeroOut()
       },
-      reverseSign: function () {
-        screen.reverseSign()
-      },
       update: function (action) {
         fsm.transition(action)
         screen.printNumber()
@@ -417,7 +457,7 @@ var CalculatorApp = (function () {
   function bindFunctions (calc) {
     $('.clear').on('click', calc.clear)
 
-    $('.sign').on('click', calc.update(ACTION.REVERSE_SIGN))
+    $('.sign').on('click', calc.update({type: ACTION.REVERSE_SIGN}))
 
     $('.digit').on('click', function () {
       calc.update({type: ACTION.DIGIT, val: $(this).text()})
@@ -445,9 +485,9 @@ var CalculatorApp = (function () {
         case 'c':
           calc.clear()
           break
-        case 'NumLock':
-          calc.update(ACTION.REVERSE_SIGN)
-          break
+        // case 'NumLock':
+        //   calc.update(ACTION.REVERSE_SIGN)
+        //   break
         case '0':
         case '1':
         case '2':
