@@ -43,13 +43,12 @@ var CalculatorApp = (function () {
   /**
    * Displays, updates, and parses current number.
    */
-  function Screen (initNumber) {
+  function Screen () {
     // Split up number into components since floats and scientific numbers aren't monospace
-    var $number = $('.number')
-    var $integer = $('.integer')
-    var $fraction = $('.fraction')
-    var $exponent = $('.exponent')
-    var number = initNumber
+    let $number = $('.number')
+    let $integer = $('.integer')
+    let $fraction = $('.fraction')
+    let $exponent = $('.exponent')
 
     function zeroOut () {
       $fraction.text('')
@@ -66,9 +65,9 @@ var CalculatorApp = (function () {
       $number.fadeOut(0).delay(10).fadeIn(0)
     }
 
-    function printNumber () {
+    function printNumber (number) {
       changeToDecimal(number.isDecimal())
-      var {integer, fraction, exponent} = number.toFormattedString()
+      let {integer, fraction, exponent} = number.toFormattedString()
 
       $integer.text(integer)
       $fraction.text(fraction)
@@ -77,22 +76,17 @@ var CalculatorApp = (function () {
       blink()
     }
 
-    function loadNumber (newNumber) {
-      number = newNumber
-    }
-
     function changeToDecimal (bool) {
       $integer.toggleClass('decimal', bool)
     }
 
     return {
       zeroOut: zeroOut,
-      loadNumber: loadNumber,
       printNumber: printNumber
     }
   }
 
-  function ErrorNumberBuilder () {
+  function ErrorNumber () {
     function isDecimal () {
       return false
     }
@@ -111,17 +105,89 @@ var CalculatorApp = (function () {
     }
   }
 
-  const ERROR_NUMBER = ErrorNumberBuilder()
+  const ERROR_NUMBER = ErrorNumber()
+
+  function NumberWrapper (initNum, initIsDecimal) {
+    let num = initNum
+    let isDecimalNum = initIsDecimal
+
+    function isDecimal () {
+      return isDecimalNum
+    }
+
+    function toNumber () {
+      return num
+    }
+
+    function truncateTrailingZeros (number) {
+      let trailingZerosRegExp = /(.*?[^0]?)0+$/
+      let match = trailingZerosRegExp.exec((number))
+      if (match) {
+        return match[1]
+      } else {
+        return number
+      }
+    }
+
+    function toFormattedString () {
+      let newInteger = ''
+      let newFraction = ''
+      let newExponent = ''
+
+      // Number can't fit on screen, display in scientific notation
+      let absNum = Math.abs(num)
+      if (absNum >= 10 ** MAX_DIGITS || ((absNum < 10 ** -(MAX_DIGITS - 1)) && absNum > 0)) {
+        let exponentialStr = num.toExponential()
+        let exponentIndex = exponentialStr.indexOf('e')
+        let mantissa = exponentialStr.substring(0, exponentIndex)
+        let periodIndex = mantissa.indexOf('.')
+        periodIndex = periodIndex === -1 ? mantissa.length : periodIndex
+        let integer = mantissa.substring(0, periodIndex)
+        let fraction = mantissa.substring(periodIndex + 1)
+        let exponent = exponentialStr.substring(exponentIndex + 2)
+        newInteger = integer
+        newFraction = fraction.substring(0, MAX_DIGITS - 1)
+        newExponent = exponent
+      } else {
+        let numberStr = num.toString()
+        let decimalPointIndex = numberStr.indexOf('.')
+        if (Number.isInteger(num)) {
+          newInteger = numberStr
+        } else {
+          numberStr = num.toFixed(MAX_DIGITS)
+          newInteger = numberStr.substring(0, decimalPointIndex)
+          newFraction = numberStr.substring(decimalPointIndex + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
+          // Round last digit
+          let digitAfterLast = numberStr.charAt(MAX_DIGITS + 1)
+          if (digitAfterLast && digitAfterLast > 5) {
+            newFraction = newFraction.slice(0, -1) + (parseInt(newFraction.charAt(newFraction.length - 1)) + 1)
+          }
+        }
+      }
+
+      newFraction = truncateTrailingZeros(newFraction)
+
+      return {
+        integer: newInteger,
+        fraction: newFraction,
+        exponent: newExponent
+      }
+    }
+
+    return {
+      isDecimal: isDecimal,
+      toNumber: toNumber,
+      toFormattedString: toFormattedString
+    }
+  }
 
   /**
    * Wraps a Number and provides methods for changing and formatting the number to conform to the calculator screen.
    * @param initNum
    * @param initIsDecimal
-   * @returns {{appendDigit: appendDigit, reverseSign: reverseSign, setDecimal: setDecimal, toNumber: toNumber, isDecimal: isDecimal, toFormattedString: toFormattedString, calculate: calculate}}
    * @constructor
    */
   function NumberBuilder (initNum, initIsDecimal) {
-    let num = initNum
     const decimalNumberRe = /-?([0-9]+)((\.)([0-9]*))?/
     let match = decimalNumberRe.exec(initNum.toString())
     let integerStr = match[1]
@@ -147,14 +213,10 @@ var CalculatorApp = (function () {
         integerStr += digit
       }
 
-      let numStr = (isNegative ? '-' : '') + integerStr + '.' + fractionStr
-      num = Number.parseFloat(numStr)
-
       return true
     }
 
     function reverseSign () {
-      num = -num
       isNegative = !isNegative
     }
 
@@ -166,75 +228,17 @@ var CalculatorApp = (function () {
       return isDecimalNum
     }
 
-    function toNumber () {
-      return num
-    }
-
     function toFormattedString () {
-      let newInteger = ''
-      let newFraction = ''
-      let newExponent = ''
-
-      let exponentialStr = num.toExponential()
-      let exponentIndex = exponentialStr.indexOf('e')
-      let periodIndex = exponentialStr.indexOf('.')
-      let integer = exponentialStr.substring(0, periodIndex)
-      let fraction = exponentialStr.substring(periodIndex + 1, exponentIndex)
-      let exponent = exponentialStr.substring(exponentIndex + 2)
-
-      let exponentNum = parseInt(exponent)
-      // Number can't fit on screen, display in scientific notation
-      if (exponentNum >= MAX_DIGITS || exponentNum <= -(MAX_DIGITS - 1)) {
-        newInteger = integer
-        newFraction = fraction.substring(0, MAX_DIGITS - 1)
-        newExponent = exponent
-      } else {
-        let numberStr = num.toString()
-        let decimalPointIndex = numberStr.indexOf('.')
-        if (decimalPointIndex === -1) {
-          newInteger = numberStr
-        } else {
-          newInteger = numberStr.substring(0, decimalPointIndex)
-          newFraction = numberStr.substring(decimalPointIndex + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
-          // Round last digit
-          let digitAfterLast = numberStr.charAt(MAX_DIGITS + 1)
-          if (digitAfterLast && digitAfterLast > 5) {
-            newFraction = newFraction.slice(0, -1) + (parseInt(newFraction.charAt(newFraction.length - 1)) + 1)
-          }
-        }
-      }
       return {
-        integer: newInteger,
-        fraction: newFraction,
-        exponent: newExponent
+        integer: integerStr,
+        fraction: fractionStr,
+        exponent: ''
       }
     }
 
-    function calculate (other, op) {
-      let lhs = toNumber()
-      other = other.toNumber()
-      let result = (function () {
-        switch (op) {
-          case OP.PERCENTAGE:
-            return lhs / 100 * other
-          case OP.DIVIDE:
-            return lhs / other
-          case OP.MULTIPLY:
-            return lhs * other
-          case OP.SUBTRACT:
-            return lhs - other
-          case OP.ADD:
-            return lhs + other
-          default:
-            return 0
-        }
-      })()
-
-      if (result === Number.POSITIVE_INFINITY || result === Number.NEGATIVE_INFINITY) {
-        throw Error('Overflow')
-      }
-
-      return NumberBuilder(result, true)
+    function toNumber () {
+      let numStr = (isNegative ? '-' : '') + integerStr + '.' + fractionStr
+      return Number.parseFloat(numStr)
     }
 
     return {
@@ -243,8 +247,7 @@ var CalculatorApp = (function () {
       setDecimal: setDecimal,
       toNumber: toNumber,
       isDecimal: isDecimal,
-      toFormattedString: toFormattedString,
-      calculate: calculate
+      toFormattedString: toFormattedString
     }
   }
 
@@ -252,33 +255,33 @@ var CalculatorApp = (function () {
    * Controller for updating calculator view
    */
   function Calculator (screen) {
-    let fsm = new FiniteStateMachine(startStateGen(NumberBuilder(10 ** 250, true)))
+    let fsm = new FiniteStateMachine(startStateGen(new NumberBuilder(0, true)))
 
-    function startStateGen (numBuilder) {
+    function startStateGen (num) {
       return function startState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            numBuilder = NumberBuilder(parseInt(action.val), false)
-            screen.loadNumber(numBuilder)
+            num = new NumberBuilder(parseInt(action.val), false)
+            screen.printNumber(num)
             if (action.val === '0') {
-              return zeroStateGen(numBuilder)
+              return zeroStateGen(num)
             } else {
-              return integerStateGen(numBuilder)
+              return integerStateGen(num)
             }
           case ACTION.PERIOD:
-            numBuilder = NumberBuilder(0, true)
-            screen.loadNumber(numBuilder)
-            return floatStateGen(numBuilder)
+            num = new NumberBuilder(0, true)
+            screen.printNumber(num)
+            return floatStateGen(num)
           case ACTION.BINARY_OP:
-            screen.loadNumber(numBuilder)
-            return chainStateGen(numBuilder, action.val)
+            screen.printNumber(num)
+            return chainStateGen(num, action.val)
           case ACTION.REVERSE_SIGN:
-            if (numBuilder.toNumber() === 0) {
+            if (num.toNumber() === 0) {
               return startState
             }
-            numBuilder.reverseSign()
-            screen.loadNumber(numBuilder)
-            return startStateGen(numBuilder)
+            num.reverseSign()
+            screen.printNumber(num)
+            return startStateGen(num)
           default:
             return startState
         }
@@ -289,23 +292,23 @@ var CalculatorApp = (function () {
       return function zeroState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            numBuilder = NumberBuilder(parseInt(action.val), false)
-            screen.loadNumber(numBuilder)
+            numBuilder = new NumberBuilder(parseInt(action.val), false)
+            screen.printNumber(numBuilder)
             if (action.val === '0') {
               return zeroState
             } else {
               return integerStateGen(numBuilder)
             }
           case ACTION.PERIOD:
-            numBuilder = NumberBuilder(0, true)
-            screen.loadNumber(numBuilder)
+            numBuilder = new NumberBuilder(0, true)
+            screen.printNumber(numBuilder)
             return floatStateGen(numBuilder)
           case ACTION.BINARY_OP:
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return chainStateGen(numBuilder, action.val)
           case ACTION.REVERSE_SIGN:
             numBuilder.reverseSign()
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return zeroStateGen(numBuilder)
           default:
             return zeroState
@@ -321,19 +324,19 @@ var CalculatorApp = (function () {
         switch (action.type) {
           case ACTION.DIGIT:
             numBuilder.appendDigit(action.val)
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return integerStateGen(numBuilder)
           case ACTION.PERIOD:
             numBuilder.setDecimal(true)
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return floatStateGen(numBuilder)
           case ACTION.BINARY_OP:
             numBuilder.setDecimal(true)
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return chainStateGen(numBuilder, action.val)
           case ACTION.REVERSE_SIGN:
             numBuilder.reverseSign()
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return integerStateGen(numBuilder)
           default:
             return integerState
@@ -349,14 +352,14 @@ var CalculatorApp = (function () {
         switch (action.type) {
           case ACTION.DIGIT:
             numBuilder.appendDigit(action.val)
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return floatStateGen(numBuilder)
           case ACTION.BINARY_OP:
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return chainStateGen(numBuilder, action.val)
           case ACTION.REVERSE_SIGN:
             numBuilder.reverseSign()
-            screen.loadNumber(numBuilder)
+            screen.printNumber(numBuilder)
             return floatStateGen(numBuilder)
           default:
             return floatState
@@ -378,22 +381,23 @@ var CalculatorApp = (function () {
     function chainStateGen (lhsNum, op) {
       function calculateAndContinue (lhsNum, rhsNum, action, defaultFn) {
         try {
-          let result = lhsNum.calculate(rhsNum, op)
-          console.log(result.toNumber())
-          screen.loadNumber(result)
+          let result = calculate(lhsNum, rhsNum, op)
+          console.log(result)
+          let numberWrapper = NumberWrapper(result, true)
+          screen.printNumber(numberWrapper)
           switch (action.type) {
             // Calculate and continue chain
             case ACTION.BINARY_OP:
-              return chainStateGen(result, action.val)
+              return chainStateGen(numberWrapper, action.val)
             // Calculate and exit chain
             case ACTION.EQUALS:
-              return startStateGen(result)
+              return startStateGen(numberWrapper)
             default:
               return defaultFn
           }
         } catch (e) {
           if (e.message === 'Overflow') {
-            screen.loadNumber(ERROR_NUMBER)
+            screen.printNumber(ERROR_NUMBER)
             return errorState
           } else {
             throw e
@@ -404,23 +408,23 @@ var CalculatorApp = (function () {
       /**
        * Number displayed on screen is an integer
        */
-      function integerStateChainedGen (num) {
+      function integerStateChainedGen (numBuilder) {
         return function integerStateChained (action) {
           switch (action.type) {
             case ACTION.DIGIT:
-              num.appendDigit(action.val)
-              screen.loadNumber(num)
-              return integerStateChainedGen(num)
+              numBuilder.appendDigit(action.val)
+              screen.printNumber(numBuilder)
+              return integerStateChainedGen(numBuilder)
             case ACTION.PERIOD:
-              num.setDecimal(true)
-              screen.loadNumber(num)
-              return floatStateChainedGen(num)
+              numBuilder.setDecimal(true)
+              screen.printNumber(numBuilder)
+              return floatStateChainedGen(numBuilder)
             case ACTION.REVERSE_SIGN:
-              num.reverseSign()
-              screen.loadNumber(num)
-              return integerStateChainedGen(num)
+              numBuilder.reverseSign()
+              screen.printNumber(numBuilder)
+              return integerStateChainedGen(numBuilder)
             default:
-              return calculateAndContinue(lhsNum, num, action, integerStateChained)
+              return calculateAndContinue(lhsNum, numBuilder, action, integerStateChained)
           }
         }
       }
@@ -428,19 +432,19 @@ var CalculatorApp = (function () {
       /**
        * Number displayed on screen is floating point
        */
-      function floatStateChainedGen (num) {
+      function floatStateChainedGen (numBuilder) {
         return function floatStateChained (action) {
           switch (action.type) {
             case ACTION.DIGIT:
-              num.appendDigit(action.val)
-              screen.loadNumber(num)
-              return floatStateChainedGen(num)
+              numBuilder.appendDigit(action.val)
+              screen.printNumber(numBuilder)
+              return floatStateChainedGen(numBuilder)
             case ACTION.REVERSE_SIGN:
-              num.reverseSign()
-              screen.loadNumber(num)
-              return floatStateChainedGen(num)
+              numBuilder.reverseSign()
+              screen.printNumber(numBuilder)
+              return floatStateChainedGen(numBuilder)
             default:
-              return calculateAndContinue(lhsNum, num, action, floatStateChained)
+              return calculateAndContinue(lhsNum, numBuilder, action, floatStateChained)
           }
         }
       }
@@ -449,23 +453,23 @@ var CalculatorApp = (function () {
         return function zeroStateChained (action) {
           switch (action.type) {
             case ACTION.DIGIT:
-              num = NumberBuilder(parseInt(action.val), false)
-              screen.loadNumber(num)
+              num = new NumberBuilder(parseInt(action.val), false)
+              screen.printNumber(num)
               if (action.val === '0') {
                 return zeroStateChained
               } else {
                 return integerStateChainedGen(num)
               }
             case ACTION.PERIOD:
-              num = NumberBuilder(0, true)
-              screen.loadNumber(num)
+              num = new NumberBuilder(0, true)
+              screen.printNumber(num)
               return floatStateChainedGen(num)
             case ACTION.BINARY_OP:
-              screen.loadNumber(num)
+              screen.printNumber(num)
               return chainStateGen(num, action.val)
             case ACTION.REVERSE_SIGN:
               num.reverseSign()
-              screen.loadNumber(num)
+              screen.printNumber(num)
               return zeroStateChainedGen(num)
             default:
               return calculateAndContinue(lhsNum, num, action, zeroStateChained)
@@ -477,27 +481,27 @@ var CalculatorApp = (function () {
         let num
         switch (action.type) {
           case ACTION.DIGIT:
-            num = NumberBuilder(parseInt(action.val), false)
-            screen.loadNumber(num)
+            num = new NumberBuilder(parseInt(action.val), false)
+            screen.printNumber(num)
             if (action.val === '0') {
               return zeroStateChainedGen(num)
             } else {
               return integerStateChainedGen(num)
             }
           case ACTION.PERIOD:
-            num = NumberBuilder(0, true)
-            screen.loadNumber(num)
+            num = new NumberBuilder(0, true)
+            screen.printNumber(num)
             return floatStateChainedGen(num)
           // Stay in chain state, update operation type
           case ACTION.BINARY_OP:
-            screen.loadNumber(lhsNum)
+            screen.printNumber(lhsNum)
             return chainStateGen(lhsNum, action.val)
           case ACTION.EQUALS:
-            screen.loadNumber(lhsNum)
+            screen.printNumber(lhsNum)
             return startStateGen(lhsNum)
           case ACTION.REVERSE_SIGN:
             lhsNum.reverseSign()
-            screen.loadNumber(lhsNum)
+            screen.printNumber(lhsNum)
             return chainStateGen(lhsNum, op)
           default:
             return chainState
@@ -507,6 +511,33 @@ var CalculatorApp = (function () {
       return chainState
     }
 
+    function calculate (lhs, rhs, op) {
+      lhs = lhs.toNumber()
+      rhs = rhs.toNumber()
+      let result = (function () {
+        switch (op) {
+          case OP.PERCENTAGE:
+            return lhs / 100 * rhs
+          case OP.DIVIDE:
+            return lhs / rhs
+          case OP.MULTIPLY:
+            return lhs * rhs
+          case OP.SUBTRACT:
+            return lhs - rhs
+          case OP.ADD:
+            return lhs + rhs
+          default:
+            return 0
+        }
+      })()
+
+      if (result === Number.POSITIVE_INFINITY || result === Number.NEGATIVE_INFINITY) {
+        throw Error('Overflow')
+      }
+
+      return result
+    }
+
     return {
       clear: function () {
         fsm.setState(startStateGen(NumberBuilder(0, true)))
@@ -514,7 +545,6 @@ var CalculatorApp = (function () {
       },
       update: function (action) {
         fsm.transition(action)
-        screen.printNumber()
       }
     }
   }
@@ -594,7 +624,7 @@ var CalculatorApp = (function () {
   }
 
   function onReady () {
-    var screen = new Screen(NumberBuilder(0, true))
+    var screen = new Screen()
     var calc = new Calculator(screen)
     bindFunctions(calc)
   }

@@ -9,7 +9,7 @@ describe('Screen parse/display suite', function () {
 
   var screen = new CalculatorApp.Screen()
   it('this should be true', function () {
-    screen.loadNumber(1)
+    screen.printNumber(1)
     // expect(screen.getNumber()).toBe(1)
   })
 })
