@@ -144,10 +144,10 @@ var CalculatorApp = (function () {
         periodIndex = periodIndex === -1 ? mantissa.length : periodIndex
         let integer = mantissa.substring(0, periodIndex)
         let fraction = mantissa.substring(periodIndex + 1)
-        let exponent = exponentialStr.substring(exponentIndex + 2)
+        let exponent = exponentialStr.substring(exponentIndex + 1)
         newInteger = integer
         newFraction = fraction.substring(0, MAX_DIGITS - 1)
-        newExponent = exponent
+        newExponent = exponent.substring(exponent.indexOf('+') === -1 ? 0 : 1)
       } else {
         let numberStr = num.toString()
         let decimalPointIndex = numberStr.indexOf('.')
