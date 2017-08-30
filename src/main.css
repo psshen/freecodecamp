@@ -83,12 +83,13 @@
     text-align: right; }
     .top .screen span {
       display: inline-block; }
-    .top .screen .integer.decimal {
-      position: relative; }
-      .top .screen .integer.decimal::after {
-        content: '.';
-        position: absolute;
-        right: -11px; }
+    .top .screen .decimal-pt {
+      padding: 0;
+      margin: 0; }
+    .top .screen .integer.decimal::after {
+      content: '.';
+      margin-left: -11px;
+      margin-right: -11px; }
     .top .screen .exponent {
       width: 40px;
       font-size: 21px;

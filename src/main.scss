@@ -167,13 +167,16 @@ $calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-
       //width: 240px;
     }
 
-    .integer.decimal {
-      position: relative;
+    .decimal-pt {
+      padding: 0;
+      margin: 0;
+    }
 
+    .integer.decimal {
       &::after {
         content: '.';
-        position: absolute;
-        right: -11px;
+        margin-left: -11px;
+        margin-right: -11px;
       }
     }
 
