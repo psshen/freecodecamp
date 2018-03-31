@@ -45,7 +45,6 @@ var CalculatorApp = (function () {
    */
   function Screen () {
     // Split up number into components since floats and scientific numbers aren't monospace
-    let $number = $('.number')
     let $integer = $('.integer')
     let $fraction = $('.fraction')
     let $exponent = $('.exponent')
@@ -53,16 +52,13 @@ var CalculatorApp = (function () {
     function zeroOut () {
       $fraction.text('')
       $exponent.text('')
+      $integer.text('')
       $integer.fadeOut(0, function () {
         $(this).text('0')
           .toggleClass('decimal', true)
           .delay(100)
           .fadeIn(0)
       })
-    }
-
-    function blink () {
-      $number.fadeOut(0).delay(10).fadeIn(0)
     }
 
     function printNumber (number) {
@@ -72,8 +68,6 @@ var CalculatorApp = (function () {
       $integer.text(integer)
       $fraction.text(fraction)
       $exponent.text(exponent)
-
-      blink()
     }
 
     function changeToDecimal (bool) {

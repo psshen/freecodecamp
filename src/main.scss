@@ -1,17 +1,10 @@
-$button-width: 70px;
-$button-height: 46px;
-$button-margin: 10px;
 $bottom-color: rgb(186, 156, 129);
 $top-background-color: #1C261B;
 $top-border-color: lighten($top-background-color, 10%);
 $button-well-width: 5px;
-$button-actual-width: $button-width + $button-well-width * 2;
-$button-adjusted-margin: $button-margin + $button-well-width * 2;
-$button-actual-height: $button-height + $button-well-width * 2;
 $calc-border-size: 8px;
 $screen-color: #7F7D66;
-$calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-width * 2 +
-     $calc-border-size * 2;
+$max-calc-width: 420px;
 
 @mixin style-button($color) {
   // Make button look more 3d, like it sticks out
@@ -30,10 +23,10 @@ $calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-
     width: 100%;
     height: 100%;
     background-image: linear-gradient(
-      to right,
-      rgba(255, 255, 255, 0.3) 0%,
-      rgba(255, 255, 255, 0.15) 4%,
-      rgba(255, 255, 255, 0) 100%
+                    to right,
+                    rgba(255, 255, 255, 0.3) 0%,
+                    rgba(255, 255, 255, 0.15) 4%,
+                    rgba(255, 255, 255, 0) 100%
     );
   }
 
@@ -55,12 +48,12 @@ $calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-
     width: 100%;
     height: 100%;
     background-image: linear-gradient(
-        to right,
-        rgba(255, 255, 255, 0.2 * $intensity) 0%,
-        rgba(255, 255, 255, 0.15 * $intensity) 25%,
-        rgba(255, 255, 255, 0.1 * $intensity) 50%,
-        rgba(255, 255, 255, 0.05 * $intensity) 75%,
-        rgba(255, 255, 255, 0) 100%
+                    to right,
+                    rgba(255, 255, 255, 0.2 * $intensity) 0%,
+                    rgba(255, 255, 255, 0.15 * $intensity) 25%,
+                    rgba(255, 255, 255, 0.1 * $intensity) 50%,
+                    rgba(255, 255, 255, 0.05 * $intensity) 75%,
+                    rgba(255, 255, 255, 0) 100%
     );
   }
 }
@@ -83,13 +76,18 @@ $calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-
   box-sizing: border-box;
 }
 
+body {
+  margin: 0;
+}
+
 .calculator {
-  width: $calculator-width;
-  margin: auto;
+  width: 100%;
+  height: 100%;
+  color: #cdcdcd;
   border-top: $calc-border-size / 2 $top-border-color outset;
   border-bottom: $calc-border-size $top-background-color outset;
-  border-radius: 4px;
-  color: #cdcdcd;
+  display: flex;
+  flex-flow: column nowrap;
 }
 
 .top {
@@ -97,117 +95,132 @@ $calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-
   padding-bottom: 8px;
   border-right: $calc-border-size inset $top-border-color;
   border-left: $calc-border-size outset $top-border-color;
+  display: flex;
+  flex-flow: column nowrap;
+  flex: 1 1 auto;
 
   .name {
     margin: 0 4px 4px;
     padding-top: 8px;
     border-bottom: 3px solid #b2002e;
     border-radius: 1px;
-    font-family: VenusRisingRegular;
+    font-family: VenusRisingRegular, monospace;
+    font-size: 16px;
     text-indent: 5%;
   }
 
   .display-container {
+    display: flex;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
     border-top: $calc-border-size inset $top-border-color;
     border-right: $calc-border-size inset $top-border-color;
     border-bottom: $calc-border-size outset $top-border-color;
     border-left: $calc-border-size outset $top-border-color;
-  }
-
-  .solar-container {
-    height: 60px;
 
     .solar-panel {
+      align-self: flex-end;
       @include add-glossy-screen-overlay(0.6);
       $cell-color: #37291d;
 
       width: 246px;
       height: 50px;
 
-      margin: 5px 20px 5px auto;
+      margin: 5px 15px 15px auto;
 
       border: 4px inset $top-border-color;
       background: repeating-linear-gradient(
-          90deg,
-          $cell-color, $cell-color 46px,
-          $screen-color 46px, $screen-color 48px
+                      90deg,
+                      $cell-color, $cell-color 46px,
+                      $screen-color 46px, $screen-color 48px
       );
     }
-  }
 
-  .display {
-    @include add-glossy-screen-overlay(2);
-    width: 324px;
-    height: 60px;
-    margin: auto auto 10px;
-    border: 4px inset $top-border-color;
-    border-radius: 4px;
-    background-color: #7E8383;
-  }
-
-  .screen {
-    width: 300px;
-    height: 40px;
-    margin: 6px auto;
-    padding: 4px 2px;
-    background-color: $screen-color;
-    color: black;
-    font-family: Digital7MonoItalic, "KacstDigital", monospace;
-    font-size: 40px;
-    font-weight: bold;
-
-    letter-spacing: 4px;
-    text-align: right;
-
-    span {
-      display: inline-block;
+    .display {
+      @include add-glossy-screen-overlay(2);
+      width: 324px;
+      height: 60px;
+      margin-bottom: 10px;
+      border: 4px inset $top-border-color;
+      border-radius: 4px;
+      background-color: #7E8383;
     }
 
-    .number {
-      //width: 240px;
-    }
+    .screen {
+      width: 300px;
+      height: 40px;
+      margin: 6px auto;
+      padding: 4px 2px;
+      background-color: $screen-color;
+      color: black;
+      font-family: Digital7MonoItalic, "KacstDigital", monospace;
+      font-size: 40px;
+      font-weight: bold;
 
-    .decimal-pt {
-      padding: 0;
-      margin: 0;
-    }
+      letter-spacing: 4px;
+      text-align: right;
 
-    .integer.decimal {
-      &::after {
-        content: '.';
-        margin-left: -11px;
-        margin-right: -11px;
+      span {
+        display: inline-block;
       }
-    }
 
-    .exponent {
-      width: 40px;
-      font-size: 21px;
-      vertical-align: text-top;
+      .number {
+        //width: 240px;
+      }
+
+      .decimal-pt {
+        padding: 0;
+        margin: 0;
+      }
+
+      .integer.decimal {
+        &::after {
+          content: '.';
+          margin-left: -11px;
+          margin-right: -11px;
+        }
+      }
+
+      .exponent {
+        width: 40px;
+        font-size: 21px;
+        vertical-align: text-top;
+      }
     }
   }
 }
 
 .bottom {
   $border-color: lighten($bottom-color, 10%);
-  height: $button-actual-height * 5 + $button-margin * 6 + $button-well-width * 2;
-  padding-top: 12px;
+  padding: 4%;
   border-right: $calc-border-size $border-color inset;
   border-left: $calc-border-size $border-color outset;
   background-color: $bottom-color;
   font-family: "Noto Sans", sans-serif;
+  flex: 2 1 auto;
+  display: flex;
+  flex-flow: column nowrap;
+
+  .button-wrapper {
+    display: grid;
+    grid-template: repeat(5, 1fr) / repeat(4, 1fr);
+    grid-row-gap: 5%;
+    grid-column-gap: 5%;
+    flex: 1 0;
+  }
 
   .button {
+    grid-column: span 1;
+    grid-row: span 1;
     @include style-button(#0e0e0e);
     position: relative;
 
-    width: $button-width;
-    height: $button-height;
-    margin: 0 0 $button-adjusted-margin $button-adjusted-margin;
     padding: 0;
 
     color: inherit;
-    font-size: 24px;
+    font-size: 4vh;
 
     box-shadow: 0 1px 0 $button-well-width #000;
 
@@ -217,8 +230,23 @@ $calculator-width: $button-actual-width * 4 + $button-margin * 5 + $button-well-
 
     &.equals {
       @include style-button(#4B4B3E);
-      width: $button-width * 2 + $button-adjusted-margin;
+      grid-column: span 2;
     }
   }
 
+}
+
+// Desktop
+@media only screen and (min-device-width: $max-calc-width) {
+  .calculator {
+    width: $max-calc-width;
+    height: $max-calc-width * 1.5;
+    border-radius: 4px;
+  }
+
+  .bottom {
+    .button {
+      font-size: 28px;
+    }
+  }
 }
