@@ -105,7 +105,7 @@ body {
     border-bottom: 3px solid #b2002e;
     border-radius: 1px;
     font-family: VenusRisingRegular, monospace;
-    font-size: 16px;
+    font-size: 1em;
     text-indent: 5%;
   }
 
@@ -212,6 +212,8 @@ body {
   }
 
   .button {
+    //min-height: 40px;
+    //min-width: 40px;
     grid-column: span 1;
     grid-row: span 1;
     @include style-button(#0e0e0e);
@@ -242,6 +244,7 @@ body {
     width: $max-calc-width;
     height: $max-calc-width * 1.5;
     border-radius: 4px;
+    margin: auto;
   }
 
   .bottom {
