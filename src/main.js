@@ -610,7 +610,6 @@ var CalculatorApp = (function () {
           calc.update({type: ACTION.BINARY_OP, val: OP.ADD})
           break
         case 'Enter':
-        case '=':
           calc.update({type: ACTION.EQUALS})
           break
       }
