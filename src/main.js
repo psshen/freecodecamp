@@ -249,13 +249,13 @@ var CalculatorApp = (function () {
    * Controller for updating calculator view
    */
   function Calculator (screen) {
-    let fsm = new FiniteStateMachine(startStateGen(new NumberBuilder(0, true)))
+    let fsm = FiniteStateMachine(startStateGen(NumberBuilder(0, true)))
 
     function startStateGen (num) {
       return function startState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            num = new NumberBuilder(parseInt(action.val), false)
+            num = NumberBuilder(parseInt(action.val), false)
             screen.printNumber(num)
             if (action.val === '0') {
               return zeroStateGen(num)
@@ -263,7 +263,7 @@ var CalculatorApp = (function () {
               return integerStateGen(num)
             }
           case ACTION.PERIOD:
-            num = new NumberBuilder(0, true)
+            num = NumberBuilder(0, true)
             screen.printNumber(num)
             return floatStateGen(num)
           case ACTION.BINARY_OP:
@@ -286,7 +286,7 @@ var CalculatorApp = (function () {
       return function zeroState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            numBuilder = new NumberBuilder(parseInt(action.val), false)
+            numBuilder = NumberBuilder(parseInt(action.val), false)
             screen.printNumber(numBuilder)
             if (action.val === '0') {
               return zeroState
@@ -294,7 +294,7 @@ var CalculatorApp = (function () {
               return integerStateGen(numBuilder)
             }
           case ACTION.PERIOD:
-            numBuilder = new NumberBuilder(0, true)
+            numBuilder = NumberBuilder(0, true)
             screen.printNumber(numBuilder)
             return floatStateGen(numBuilder)
           case ACTION.BINARY_OP:
@@ -447,7 +447,7 @@ var CalculatorApp = (function () {
         return function zeroStateChained (action) {
           switch (action.type) {
             case ACTION.DIGIT:
-              num = new NumberBuilder(parseInt(action.val), false)
+              num = NumberBuilder(parseInt(action.val), false)
               screen.printNumber(num)
               if (action.val === '0') {
                 return zeroStateChained
@@ -455,7 +455,7 @@ var CalculatorApp = (function () {
                 return integerStateChainedGen(num)
               }
             case ACTION.PERIOD:
-              num = new NumberBuilder(0, true)
+              num = NumberBuilder(0, true)
               screen.printNumber(num)
               return floatStateChainedGen(num)
             case ACTION.BINARY_OP:
@@ -475,7 +475,7 @@ var CalculatorApp = (function () {
         let num
         switch (action.type) {
           case ACTION.DIGIT:
-            num = new NumberBuilder(parseInt(action.val), false)
+            num = NumberBuilder(parseInt(action.val), false)
             screen.printNumber(num)
             if (action.val === '0') {
               return zeroStateChainedGen(num)
@@ -483,7 +483,7 @@ var CalculatorApp = (function () {
               return integerStateChainedGen(num)
             }
           case ACTION.PERIOD:
-            num = new NumberBuilder(0, true)
+            num = NumberBuilder(0, true)
             screen.printNumber(num)
             return floatStateChainedGen(num)
           // Stay in chain state, update operation type
@@ -550,8 +550,9 @@ var CalculatorApp = (function () {
       calc.update({type: ACTION.REVERSE_SIGN})
     })
 
-    $('.digit').on('click', function () {
+    $('.digit').on('click', function (e) {
       calc.update({type: ACTION.DIGIT, val: $(this).text()})
+      e.stopPropagation()
     })
 
     $('.period').on('click', function () {
@@ -566,10 +567,7 @@ var CalculatorApp = (function () {
       calc.update({type: ACTION.EQUALS})
     })
 
-    window.addEventListener('keypress', function (event) {
-      if (event.defaultPrevented) {
-        return
-      }
+    $(document).on('keypress', function (event) {
       console.log('Pressed key: ' + event.key)
       switch (event.key) {
         case 'Delete':
@@ -611,14 +609,16 @@ var CalculatorApp = (function () {
           break
         case 'Enter':
           calc.update({type: ACTION.EQUALS})
+          // prevents trigger of a focused button's onclick listener
+          event.preventDefault()
           break
       }
     })
   }
 
   function onReady () {
-    var screen = new Screen()
-    var calc = new Calculator(screen)
+    var screen = Screen()
+    var calc = Calculator(screen)
     bindFunctions(calc)
   }
 
