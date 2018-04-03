@@ -92,7 +92,7 @@ body {
 
 .top {
   background-color: $top-background-color;
-  padding-bottom: 8px;
+  padding-bottom: 2%;
   border-right: $calc-border-size inset $top-border-color;
   border-left: $calc-border-size outset $top-border-color;
   display: flex;
@@ -105,7 +105,7 @@ body {
     border-bottom: 3px solid #b2002e;
     border-radius: 1px;
     font-family: VenusRisingRegular, monospace;
-    font-size: 1em;
+    font-size: 2.5vh;
     text-indent: 5%;
   }
 
@@ -125,22 +125,24 @@ body {
       @include add-glossy-screen-overlay(0.6);
       $cell-color: #37291d;
 
-      width: 246px;
-      height: 50px;
+      width: 250px;
+      height: 8%;
+      max-height: 50px;
 
       margin: 5px 15px 15px auto;
 
       border: 4px inset $top-border-color;
       background: repeating-linear-gradient(
                       90deg,
-                      $cell-color, $cell-color 46px,
-                      $screen-color 46px, $screen-color 48px
+                      $cell-color, $cell-color 47px,
+                      $screen-color 47px, $screen-color 49px
       );
     }
 
     .display {
       @include add-glossy-screen-overlay(2);
-      width: 324px;
+      max-width: 324px;
+      width: 90%;
       height: 60px;
       margin-bottom: 10px;
       border: 4px inset $top-border-color;
@@ -149,7 +151,8 @@ body {
     }
 
     .screen {
-      width: 300px;
+      max-width: 300px;
+      width: 93%;
       height: 40px;
       margin: 6px auto;
       padding: 4px 2px;
@@ -212,8 +215,6 @@ body {
   }
 
   .button {
-    //min-height: 40px;
-    //min-width: 40px;
     grid-column: span 1;
     grid-row: span 1;
     @include style-button(#0e0e0e);
@@ -247,9 +248,15 @@ body {
     margin: auto;
   }
 
+  .top {
+    .name {
+      font-size: 1.5em;
+    }
+  }
+
   .bottom {
     .button {
-      font-size: 28px;
+      font-size: 32px;
     }
   }
 }
