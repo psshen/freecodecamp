@@ -108,7 +108,7 @@ body {
   border-left: $calc-border-size outset $top-border-color;
   display: flex;
   flex-flow: column nowrap;
-  flex: 1 1 auto;
+  flex: 2 0 40%;
 
   .name {
     margin: 0 4px 4px;
@@ -137,8 +137,7 @@ body {
       $cell-color: #37291d;
 
       width: 250px;
-      height: 8%;
-      max-height: 50px;
+      flex: 0 1 50px;
 
       margin: 5px 15px 15px auto;
 
@@ -208,12 +207,12 @@ body {
 
 .bottom {
   $border-color: lighten($bottom-color, 10%);
-  padding: 4%;
+  padding: 16px;
   border-right: $calc-border-size $border-color inset;
   border-left: $calc-border-size $border-color outset;
   background-color: $bottom-color;
-  font-family: "Noto Sans", sans-serif;
-  flex: 2 1 auto;
+  font-family: sans-serif;
+  flex: 3 1 60%;
   display: flex;
   flex-flow: column nowrap;
 

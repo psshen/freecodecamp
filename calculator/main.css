@@ -30,7 +30,7 @@ body {
   border-left: 8px outset #324430;
   display: flex;
   flex-flow: column nowrap;
-  flex: 1 1 auto; }
+  flex: 2 0 40%; }
   .top .name {
     margin: 0 4px 4px;
     padding-top: 8px;
@@ -53,8 +53,7 @@ body {
       align-self: flex-end;
       position: relative;
       width: 250px;
-      height: 8%;
-      max-height: 50px;
+      flex: 0 1 50px;
       margin: 5px 15px 15px auto;
       border: 4px inset #324430;
       background: repeating-linear-gradient(90deg, #37291d, #37291d 47px, #7F7D66 47px, #7F7D66 49px); }
@@ -111,12 +110,12 @@ body {
         vertical-align: text-top; }
 
 .bottom {
-  padding: 4%;
+  padding: 16px;
   border-right: 8px #ccb6a2 inset;
   border-left: 8px #ccb6a2 outset;
   background-color: #ba9c81;
-  font-family: "Noto Sans", sans-serif;
-  flex: 2 1 auto;
+  font-family: sans-serif;
+  flex: 3 1 60%;
   display: flex;
   flex-flow: column nowrap; }
   .bottom .button-wrapper {
