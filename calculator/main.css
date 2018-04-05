@@ -18,16 +18,16 @@ body {
   width: 100%;
   height: 100%;
   color: #cdcdcd;
-  border-top: 4px #324430 outset;
-  border-bottom: 8px #1C261B outset;
+  border-top: 4px solid #1C261B;
+  border-bottom: 8px solid #000000;
   display: flex;
   flex-flow: column nowrap; }
 
 .top {
   background-color: #1C261B;
   padding-bottom: 2%;
-  border-right: 8px inset #324430;
-  border-left: 8px outset #324430;
+  border-right: 8px solid #324430;
+  border-left: 8px solid #324430;
   display: flex;
   flex-flow: column nowrap;
   flex: 2 0 40%; }
@@ -45,17 +45,18 @@ body {
     justify-content: center;
     align-items: center;
     flex-grow: 1;
-    border-top: 8px inset #324430;
-    border-right: 8px inset #324430;
-    border-bottom: 8px outset #324430;
-    border-left: 8px outset #324430; }
+    border: 8px solid #000000;
+    border-right-color: #324430;
+    border-left-color: #324430; }
     .top .display-container .solar-panel {
       align-self: flex-end;
       position: relative;
       width: 250px;
       flex: 0 1 50px;
       margin: 5px 15px 15px auto;
-      border: 4px inset #324430;
+      border: 4px solid #000000;
+      border-right-color: #324430;
+      border-bottom-color: #324430;
       background: repeating-linear-gradient(90deg, #37291d, #37291d 47px, #7F7D66 47px, #7F7D66 49px); }
       .top .display-container .solar-panel::before {
         content: '';
@@ -71,7 +72,9 @@ body {
       width: 90%;
       height: 60px;
       margin-bottom: 10px;
-      border: 4px inset #324430;
+      border: 4px solid #000000;
+      border-right-color: #324430;
+      border-bottom-color: #324430;
       border-radius: 4px;
       background-color: #7E8383; }
       .top .display-container .display::before {
@@ -111,8 +114,8 @@ body {
 
 .bottom {
   padding: 16px;
-  border-right: 8px #ccb6a2 inset;
-  border-left: 8px #ccb6a2 outset;
+  border-right: 8px solid #CCB6A2;
+  border-left: 8px solid #CCB6A2;
   background-color: #ba9c81;
   font-family: sans-serif;
   flex: 3 1 60%;
@@ -127,8 +130,8 @@ body {
   .bottom .button {
     grid-column: span 1;
     grid-row: span 1;
-    border: 1px outset #1b1b1b;
-    border-radius: 1px;
+    border: 1px solid #1b1b1b;
+    border-radius: 2px;
     background: linear-gradient(to right, #222222 4%, #0e0e0e 100%);
     position: relative;
     padding: 0;
@@ -149,8 +152,8 @@ body {
     .bottom .button:focus {
       outline: none; }
     .bottom .button.clear {
-      border: 1px outset #d13020;
-      border-radius: 1px;
+      border: 1px solid #d13020;
+      border-radius: 2px;
       background: linear-gradient(to right, #dd3424 4%, #BB2B1D 100%); }
       .bottom .button.clear::before {
         content: '';
@@ -164,8 +167,8 @@ body {
         transform: translateY(2px);
         box-shadow: 0 -1px 0 5px black; }
     .bottom .button.equals {
-      border: 1px outset #59594a;
-      border-radius: 1px;
+      border: 1px solid #59594a;
+      border-radius: 2px;
       background: linear-gradient(to right, #616150 4%, #4B4B3E 100%);
       grid-column: span 2; }
       .bottom .button.equals::before {
