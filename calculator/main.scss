@@ -238,6 +238,10 @@ body {
 
     box-shadow: 0 1px 0 $button-well-width #000;
 
+    &:focus {
+      outline: none;
+    }
+
     &.clear {
       @include style-button(#BB2B1D);
     }

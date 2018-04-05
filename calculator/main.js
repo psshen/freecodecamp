@@ -552,7 +552,6 @@ var CalculatorApp = (function () {
 
     $('.digit').on('click', function (e) {
       calc.update({type: ACTION.DIGIT, val: $(this).text()})
-      e.stopPropagation()
     })
 
     $('.period').on('click', function () {

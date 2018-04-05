@@ -147,6 +147,8 @@ body {
     .bottom .button:active {
       transform: translateY(2px);
       box-shadow: 0 -1px 0 5px black; }
+    .bottom .button:focus {
+      outline: none; }
     .bottom .button.clear {
       border: 1px outset #d13020;
       border-radius: 1px;
