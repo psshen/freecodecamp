@@ -199,6 +199,13 @@ body {
         }
       }
 
+      .integer.negative {
+        &::before {
+          content: '-';
+          margin-right: -6px;
+        }
+      }
+
       .exponent {
         width: 40px;
         font-size: 21px;
@@ -242,6 +249,9 @@ body {
 
     &:focus {
       outline: none;
+    }
+    &::-moz-focus-inner {
+      border: 0;
     }
 
     &.clear {

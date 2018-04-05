@@ -107,6 +107,9 @@ body {
         content: '.';
         margin-left: -11px;
         margin-right: -11px; }
+      .top .display-container .screen .integer.negative::before {
+        content: '-';
+        margin-right: -6px; }
       .top .display-container .screen .exponent {
         width: 40px;
         font-size: 21px;
@@ -151,6 +154,8 @@ body {
       box-shadow: 0 -1px 0 5px black; }
     .bottom .button:focus {
       outline: none; }
+    .bottom .button::-moz-focus-inner {
+      border: 0; }
     .bottom .button.clear {
       border: 1px solid #d13020;
       border-radius: 2px;

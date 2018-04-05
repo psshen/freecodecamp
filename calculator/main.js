@@ -62,7 +62,8 @@ var CalculatorApp = (function () {
     }
 
     function printNumber (number) {
-      changeToDecimal(number.isDecimal())
+      toggleDecimal(number.isDecimal())
+      toggleNegative(number.isNegative())
       let {integer, fraction, exponent} = number.toFormattedString()
 
       $integer.text(integer)
@@ -70,8 +71,12 @@ var CalculatorApp = (function () {
       $exponent.text(exponent)
     }
 
-    function changeToDecimal (bool) {
+    function toggleDecimal (bool) {
       $integer.toggleClass('decimal', bool)
+    }
+
+    function toggleNegative (bool) {
+      $integer.toggleClass('negative', bool)
     }
 
     return {
@@ -85,6 +90,10 @@ var CalculatorApp = (function () {
       return false
     }
 
+    function isNegative () {
+      return false
+    }
+
     function toFormattedString () {
       return {
         integer: 'Error',
@@ -95,6 +104,7 @@ var CalculatorApp = (function () {
 
     return {
       isDecimal: isDecimal,
+      isNegative: isNegative,
       toFormattedString: toFormattedString
     }
   }
@@ -131,7 +141,7 @@ var CalculatorApp = (function () {
       // Number can't fit on screen, display in scientific notation
       let absNum = Math.abs(num)
       if (absNum >= 10 ** MAX_DIGITS || ((absNum < 10 ** -(MAX_DIGITS - 1)) && absNum > 0)) {
-        let exponentialStr = num.toExponential()
+        let exponentialStr = absNum.toExponential()
         let exponentIndex = exponentialStr.indexOf('e')
         let mantissa = exponentialStr.substring(0, exponentIndex)
         let periodIndex = mantissa.indexOf('.')
@@ -143,12 +153,12 @@ var CalculatorApp = (function () {
         newFraction = fraction.substring(0, MAX_DIGITS - 1)
         newExponent = exponent.substring(exponent.indexOf('+') === -1 ? 0 : 1)
       } else {
-        let numberStr = num.toString()
+        let numberStr = absNum.toString()
         let decimalPointIndex = numberStr.indexOf('.')
-        if (Number.isInteger(num)) {
+        if (Number.isInteger(absNum)) {
           newInteger = numberStr
         } else {
-          numberStr = num.toFixed(MAX_DIGITS)
+          numberStr = absNum.toFixed(MAX_DIGITS)
           newInteger = numberStr.substring(0, decimalPointIndex)
           newFraction = numberStr.substring(decimalPointIndex + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
           // Round last digit
@@ -168,8 +178,22 @@ var CalculatorApp = (function () {
       }
     }
 
+    function reverseSign () {
+      num = -num
+    }
+
+    function isNegative () {
+      let sign = Math.sign(num)
+      if (Number.isNaN(sign)) {
+        return false
+      }
+      return sign < 0
+    }
+
     return {
       isDecimal: isDecimal,
+      isNegative: isNegative,
+      reverseSign: reverseSign,
       toNumber: toNumber,
       toFormattedString: toFormattedString
     }
@@ -190,7 +214,7 @@ var CalculatorApp = (function () {
       fractionStr = match[4]
     }
     let isDecimalNum = initIsDecimal
-    let isNegative = false
+    let _isNegative = false
 
     function numDigits () {
       return integerStr.length + fractionStr.length
@@ -211,7 +235,11 @@ var CalculatorApp = (function () {
     }
 
     function reverseSign () {
-      isNegative = !isNegative
+      _isNegative = !_isNegative
+    }
+
+    function isNegative () {
+      return _isNegative
     }
 
     function setDecimal (newIsDecimal) {
@@ -231,7 +259,7 @@ var CalculatorApp = (function () {
     }
 
     function toNumber () {
-      let numStr = (isNegative ? '-' : '') + integerStr + '.' + fractionStr
+      let numStr = (isNegative() ? '-' : '') + integerStr + '.' + fractionStr
       return Number.parseFloat(numStr)
     }
 
@@ -241,6 +269,7 @@ var CalculatorApp = (function () {
       setDecimal: setDecimal,
       toNumber: toNumber,
       isDecimal: isDecimal,
+      isNegative: isNegative,
       toFormattedString: toFormattedString
     }
   }
@@ -298,6 +327,7 @@ var CalculatorApp = (function () {
             screen.printNumber(numBuilder)
             return floatStateGen(numBuilder)
           case ACTION.BINARY_OP:
+            numBuilder.setDecimal(true)
             screen.printNumber(numBuilder)
             return chainStateGen(numBuilder, action.val)
           case ACTION.REVERSE_SIGN:
@@ -390,7 +420,7 @@ var CalculatorApp = (function () {
               return defaultFn
           }
         } catch (e) {
-          if (e.message === 'Overflow') {
+          if (e.message === 'Overflow' || e.message === 'NaN') {
             screen.printNumber(ERROR_NUMBER)
             return errorState
           } else {
@@ -527,6 +557,9 @@ var CalculatorApp = (function () {
 
       if (result === Number.POSITIVE_INFINITY || result === Number.NEGATIVE_INFINITY) {
         throw Error('Overflow')
+      }
+      if (Number.isNaN(result)) {
+        throw Error('NaN')
       }
 
       return result
