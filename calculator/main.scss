@@ -164,10 +164,9 @@ body {
     }
 
     .screen {
-      max-width: 300px;
-      width: 93%;
+      width: 95%;
       height: 40px;
-      margin: 6px auto;
+      margin: 6px;
       padding: 4px 2px;
       background-color: $screen-color;
       color: black;
@@ -178,17 +177,10 @@ body {
       letter-spacing: 4px;
       text-align: right;
 
-      span {
-        display: inline-block;
-      }
-
       .number {
-        //width: 240px;
-      }
-
-      .decimal-pt {
-        padding: 0;
-        margin: 0;
+        display: inline-flex;
+        flex-flow: row nowrap;
+        justify-content: flex-end;
       }
 
       .integer.decimal {
@@ -207,7 +199,7 @@ body {
       }
 
       .exponent {
-        width: 40px;
+        flex: 0 0 40px;
         font-size: 21px;
         vertical-align: text-top;
       }

@@ -1,9 +1,8 @@
 /* eslint-env jquery */
-var CalculatorApp = (function () {
+let CalculatorApp = (function () {
   'use strict'
-  const MAX_DIGITS = 10 // Width of screen in digits
 
-  var ACTION = {
+  let ACTION = {
     DIGIT: 0,
     PERIOD: 1,
     BINARY_OP: 2,
@@ -11,7 +10,7 @@ var CalculatorApp = (function () {
     REVERSE_SIGN: 4
   }
 
-  var OP = {
+  let OP = {
     PERCENTAGE: 0,
     DIVIDE: 1,
     MULTIPLY: 2,
@@ -26,7 +25,7 @@ var CalculatorApp = (function () {
    * @constructor
    */
   function FiniteStateMachine (initStateFn) {
-    var currStateFn = initStateFn
+    let currStateFn = initStateFn
 
     return {
       transition: function (action) {
@@ -48,24 +47,47 @@ var CalculatorApp = (function () {
     let $integer = $('.integer')
     let $fraction = $('.fraction')
     let $exponent = $('.exponent')
+    let _maxDigits = determineMaxDigits()
 
     function zeroOut () {
+      toggleDecimal(true)
+      toggleNegative(false)
       $fraction.text('')
       $exponent.text('')
-      $integer.text('')
-      $integer.fadeOut(0, function () {
-        $(this).text('0')
-          .toggleClass('decimal', true)
-          .delay(100)
-          .fadeIn(0)
-      })
+      $integer.text('0')
+    }
+
+    function determineMaxDigits () {
+      let integerElem = document.querySelector('.integer')
+      let screenElem = document.querySelector('.screen')
+      let exponentElem = document.querySelector('.exponent')
+      let screenWidth = screenElem.getBoundingClientRect().width
+      let exponentWidth = exponentElem.getBoundingClientRect().width
+
+      integerElem.textContent = '9'
+      integerElem.classList.add('decimal')
+      integerElem.classList.add('negative')
+      let maxWidth = (screenWidth - exponentWidth)
+      console.log(maxWidth)
+      do {
+        integerElem.append('9')
+        console.log(integerElem.getBoundingClientRect())
+      } while (integerElem.getBoundingClientRect().width < maxWidth)
+      let maxDigits = integerElem.textContent.length - 1
+      console.log(maxDigits)
+      zeroOut()
+      return maxDigits
+    }
+
+    function maxDigits () {
+      return _maxDigits
     }
 
     function printNumber (number) {
       toggleDecimal(number.isDecimal())
       toggleNegative(number.isNegative())
-      let {integer, fraction, exponent} = number.toFormattedString()
 
+      let {integer, fraction, exponent} = number.toFormattedString(maxDigits())
       $integer.text(integer)
       $fraction.text(fraction)
       $exponent.text(exponent)
@@ -81,7 +103,8 @@ var CalculatorApp = (function () {
 
     return {
       zeroOut: zeroOut,
-      printNumber: printNumber
+      printNumber: printNumber,
+      maxDigits: maxDigits
     }
   }
 
@@ -133,14 +156,14 @@ var CalculatorApp = (function () {
       }
     }
 
-    function toFormattedString () {
+    function toFormattedString (maxDigits) {
       let newInteger = ''
       let newFraction = ''
       let newExponent = ''
 
       // Number can't fit on screen, display in scientific notation
       let absNum = Math.abs(num)
-      if (absNum >= 10 ** MAX_DIGITS || ((absNum < 10 ** -(MAX_DIGITS - 1)) && absNum > 0)) {
+      if (absNum >= 10 ** maxDigits || ((absNum < 10 ** -(maxDigits - 1)) && absNum > 0)) {
         let exponentialStr = absNum.toExponential()
         let exponentIndex = exponentialStr.indexOf('e')
         let mantissa = exponentialStr.substring(0, exponentIndex)
@@ -150,7 +173,7 @@ var CalculatorApp = (function () {
         let fraction = mantissa.substring(periodIndex + 1)
         let exponent = exponentialStr.substring(exponentIndex + 1)
         newInteger = integer
-        newFraction = fraction.substring(0, MAX_DIGITS - 1)
+        newFraction = fraction.substring(0, maxDigits - 1)
         newExponent = exponent.substring(exponent.indexOf('+') === -1 ? 0 : 1)
       } else {
         let numberStr = absNum.toString()
@@ -158,11 +181,11 @@ var CalculatorApp = (function () {
         if (Number.isInteger(absNum)) {
           newInteger = numberStr
         } else {
-          numberStr = absNum.toFixed(MAX_DIGITS)
+          numberStr = absNum.toFixed(maxDigits)
           newInteger = numberStr.substring(0, decimalPointIndex)
-          newFraction = numberStr.substring(decimalPointIndex + 1, Math.min(MAX_DIGITS + 1, numberStr.length))
+          newFraction = numberStr.substring(decimalPointIndex + 1, Math.min(maxDigits + 1, numberStr.length))
           // Round last digit
-          let digitAfterLast = numberStr.charAt(MAX_DIGITS + 1)
+          let digitAfterLast = numberStr.charAt(maxDigits + 1)
           if (digitAfterLast && digitAfterLast > 5) {
             newFraction = newFraction.slice(0, -1) + (parseInt(newFraction.charAt(newFraction.length - 1)) + 1)
           }
@@ -220,8 +243,8 @@ var CalculatorApp = (function () {
       return integerStr.length + fractionStr.length
     }
 
-    function appendDigit (digit) {
-      if (numDigits() === MAX_DIGITS) {
+    function appendDigit (digit, maxDigits) {
+      if (numDigits() === maxDigits) {
         return false
       }
 
@@ -347,7 +370,7 @@ var CalculatorApp = (function () {
       return function integerState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            numBuilder.appendDigit(action.val)
+            numBuilder.appendDigit(action.val, screen.maxDigits())
             screen.printNumber(numBuilder)
             return integerStateGen(numBuilder)
           case ACTION.PERIOD:
@@ -375,7 +398,7 @@ var CalculatorApp = (function () {
       return function floatState (action) {
         switch (action.type) {
           case ACTION.DIGIT:
-            numBuilder.appendDigit(action.val)
+            numBuilder.appendDigit(action.val, screen.maxDigits())
             screen.printNumber(numBuilder)
             return floatStateGen(numBuilder)
           case ACTION.BINARY_OP:
@@ -436,7 +459,7 @@ var CalculatorApp = (function () {
         return function integerStateChained (action) {
           switch (action.type) {
             case ACTION.DIGIT:
-              numBuilder.appendDigit(action.val)
+              numBuilder.appendDigit(action.val, screen.maxDigits())
               screen.printNumber(numBuilder)
               return integerStateChainedGen(numBuilder)
             case ACTION.PERIOD:
@@ -460,7 +483,7 @@ var CalculatorApp = (function () {
         return function floatStateChained (action) {
           switch (action.type) {
             case ACTION.DIGIT:
-              numBuilder.appendDigit(action.val)
+              numBuilder.appendDigit(action.val, screen.maxDigits())
               screen.printNumber(numBuilder)
               return floatStateChainedGen(numBuilder)
             case ACTION.REVERSE_SIGN:
@@ -649,8 +672,8 @@ var CalculatorApp = (function () {
   }
 
   function onReady () {
-    var screen = Screen()
-    var calc = Calculator(screen)
+    let screen = Screen()
+    let calc = Calculator(screen)
     bindFunctions(calc)
   }
 

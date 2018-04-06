@@ -86,10 +86,9 @@ body {
         height: 100%;
         background-image: linear-gradient(to right, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.3) 25%, rgba(255, 255, 255, 0.2) 50%, rgba(255, 255, 255, 0.1) 75%, rgba(255, 255, 255, 0) 100%); }
     .top .display-container .screen {
-      max-width: 300px;
-      width: 93%;
+      width: 95%;
       height: 40px;
-      margin: 6px auto;
+      margin: 6px;
       padding: 4px 2px;
       background-color: #7F7D66;
       color: black;
@@ -98,11 +97,10 @@ body {
       font-weight: bold;
       letter-spacing: 4px;
       text-align: right; }
-      .top .display-container .screen span {
-        display: inline-block; }
-      .top .display-container .screen .decimal-pt {
-        padding: 0;
-        margin: 0; }
+      .top .display-container .screen .number {
+        display: inline-flex;
+        flex-flow: row nowrap;
+        justify-content: flex-end; }
       .top .display-container .screen .integer.decimal::after {
         content: '.';
         margin-left: -11px;
@@ -111,7 +109,7 @@ body {
         content: '-';
         margin-right: -6px; }
       .top .display-container .screen .exponent {
-        width: 40px;
+        flex: 0 0 40px;
         font-size: 21px;
         vertical-align: text-top; }
 
