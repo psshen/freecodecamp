@@ -1,6 +1,7 @@
+@import url('https://fonts.googleapis.com/css?family=Arimo');
+
 $bottom-color: rgb(186, 156, 129);
 $top-background-color: #1C261B;
-$top-border-color: lighten($top-background-color, 10%);
 $button-well-width: 5px;
 $calc-border-size: 8px;
 $screen-color: #7F7D66;
@@ -60,11 +61,10 @@ $max-calc-width: 420px;
 
 @mixin graph-paper-background($grid-color) {
   background-color: rgba(#fff, .5);
-  background-image:
-      linear-gradient($grid-color 2px, transparent 2px),
-      linear-gradient(90deg, $grid-color 2px, transparent 2px),
-      linear-gradient(rgba(150, 150, 150, .3) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(150, 150, 150, .3) 1px, transparent 1px);
+  background-image: linear-gradient($grid-color 2px, transparent 2px),
+  linear-gradient(90deg, $grid-color 2px, transparent 2px),
+  linear-gradient(rgba(150, 150, 150, .3) 1px, transparent 1px),
+  linear-gradient(90deg, rgba(150, 150, 150, .3) 1px, transparent 1px);
   background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
   background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
 }
@@ -155,7 +155,7 @@ body {
       max-width: 324px;
       width: 90%;
       height: 60px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       border: 4px solid #000000;
       border-right-color: #324430;
       border-bottom-color: #324430;
@@ -208,12 +208,10 @@ body {
 }
 
 .bottom {
-  $border-color: lighten($bottom-color, 10%);
   padding: 16px;
   border-right: $calc-border-size solid #CCB6A2;
   border-left: $calc-border-size solid #CCB6A2;
   background-color: $bottom-color;
-  font-family: sans-serif;
   flex: 3 1 60%;
   display: flex;
   flex-flow: column nowrap;
@@ -227,8 +225,7 @@ body {
   }
 
   .button {
-    grid-column: span 1;
-    grid-row: span 1;
+    font-family: 'Arimo', sans-serif;
     @include style-button(#0e0e0e);
     position: relative;
 
@@ -265,7 +262,7 @@ body {
   .calculator {
     width: $max-calc-width;
     height: $max-calc-width * 1.5;
-    border-radius: 4px;
+    border-radius: 6px;
     margin-left: auto;
     margin-right: auto;
     margin-top: 100px;

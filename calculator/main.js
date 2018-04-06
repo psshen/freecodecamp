@@ -68,13 +68,10 @@ let CalculatorApp = (function () {
       integerElem.classList.add('decimal')
       integerElem.classList.add('negative')
       let maxWidth = (screenWidth - exponentWidth)
-      console.log(maxWidth)
       do {
         integerElem.append('9')
-        console.log(integerElem.getBoundingClientRect())
       } while (integerElem.getBoundingClientRect().width < maxWidth)
       let maxDigits = integerElem.textContent.length - 1
-      console.log(maxDigits)
       zeroOut()
       return maxDigits
     }
@@ -623,7 +620,7 @@ let CalculatorApp = (function () {
     })
 
     $(document).on('keypress', function (event) {
-      console.log('Pressed key: ' + event.key)
+      // console.log('Pressed key: ' + event.key)
       switch (event.key) {
         case 'Delete':
         case 'c':
