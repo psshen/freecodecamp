@@ -679,4 +679,4 @@ let CalculatorApp = (function () {
   }
 })()
 
-$(document).ready(CalculatorApp.onReady)
+$(window).load(CalculatorApp.onReady)
