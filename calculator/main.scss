@@ -90,6 +90,10 @@ $max-calc-width: 420px;
 body {
   margin: 0;
   height: 100%;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .calculator {
