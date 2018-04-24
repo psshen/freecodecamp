@@ -261,7 +261,7 @@ body {
 }
 
 @media only screen and (min-device-width: $max-calc-width) {
-  html {
+  body {
     @include graph-paper-background(#566f78)
   }
   .calculator {
