@@ -89,9 +89,12 @@ $max-calc-width: 420px;
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  height: 100%;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
@@ -263,6 +266,9 @@ body {
 }
 
 @media only screen and (min-device-width: $max-calc-width) {
+  html, body {
+    height: auto;
+  }
   body {
     @include graph-paper-background(#566f78)
   }
