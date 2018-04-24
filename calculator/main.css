@@ -1,12 +1,12 @@
 @import url("https://fonts.googleapis.com/css?family=Arimo");
 @font-face {
   font-family: Digital7MonoItalic;
-  src: url("fonts/digital-7.monoitalic.ttf") format("truetype");
+  src: url("fonts/digital-7.monoitalic.ttf") format("truetype"), url("https://rawgit.com/psshen/freecodecamp/master/calculator/fonts/digital-7.monoitalic.ttf") format("truetype");
   font-weight: normal;
   font-style: normal; }
 @font-face {
   font-family: VenusRisingRegular;
-  src: url("fonts/venus_rising_rg.otf");
+  src: url("fonts/venus_rising_rg.otf"), url("https://rawgit.com/psshen/freecodecamp/master/calculator/fonts/venus_rising_rg.otf");
   font-weight: normal;
   font-style: normal; }
 * {
