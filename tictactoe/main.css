@@ -23,7 +23,22 @@ button {
   height: 100%; }
 
 .player-selection {
-  margin: auto; }
+  margin: auto;
+  height: 100px;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: center; }
+  .player-selection [class$="-btn"],
+  .player-selection [class*="-btn"] {
+    height: 32px;
+    width: 64px;
+    border: solid 1px; }
+  .player-selection .x-btn {
+    background: url(img/x-web.svg) no-repeat left/90%; }
+  .player-selection .o-btn {
+    background: url(img/o-web.svg) no-repeat left/90%; }
 
 .board-container {
   margin: 0;
@@ -37,10 +52,10 @@ button {
   height: 290px;
   margin: 20px auto;
   background-image: repeating-linear-gradient(to right, transparent, transparent 90px, #008000 90px, #008000 calc(90px + 10px)), repeating-linear-gradient(to bottom, transparent, transparent 90px, #008000 90px, #008000 calc(90px + 10px)); }
-  .board .cell.o {
-    background: url(img/o-web.svg) no-repeat center/90%; }
   .board .cell.x {
     background: url(img/x-web.svg) no-repeat center/90%; }
+  .board .cell.o {
+    background: url(img/o-web.svg) no-repeat center/90%; }
 
 .restart-button-container {
   height: 100px;

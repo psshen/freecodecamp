@@ -29,6 +29,27 @@ button {
 
 .player-selection {
   margin: auto;
+  height: 100px;
+  width: 100%;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: center;
+  justify-content: center;
+
+  [class$="-btn"],
+  [class*="-btn"] {
+    height: 32px;
+    width: 64px;
+    border: solid 1px;
+  }
+
+  .x-btn {
+    background: url(img/x-web.svg) no-repeat left/90%;
+  }
+
+  .o-btn {
+    background: url(img/o-web.svg) no-repeat left/90%;
+  }
 }
 
 .board-container {
@@ -56,12 +77,12 @@ button {
 
   .cell {
 
-    &.o {
-      background: url(img/o-web.svg) no-repeat center/90%;
-    }
-
     &.x {
       background: url(img/x-web.svg) no-repeat center/90%;
+    }
+
+    &.o {
+      background: url(img/o-web.svg) no-repeat center/90%;
     }
   }
 }
