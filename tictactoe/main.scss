@@ -33,7 +33,7 @@ button {
 
 .board-container {
   margin: 0;
-  background-color: blue;
+  background-color: yellow;
 }
 
 .board {
@@ -56,17 +56,12 @@ button {
 
   .cell {
 
-    &.x {
-      &::after {
-        content: 'X';
-        text-align: center;
-      }
+    &.o {
+      background: url(img/o-web.svg) no-repeat center/90%;
     }
 
-    &.o {
-      &::after {
-        content: 'O';
-      }
+    &.x {
+      background: url(img/x-web.svg) no-repeat center/90%;
     }
   }
 }

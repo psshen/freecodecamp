@@ -27,7 +27,7 @@ button {
 
 .board-container {
   margin: 0;
-  background-color: blue; }
+  background-color: yellow; }
 
 .board {
   display: grid;
@@ -37,11 +37,10 @@ button {
   height: 290px;
   margin: 20px auto;
   background-image: repeating-linear-gradient(to right, transparent, transparent 90px, #008000 90px, #008000 calc(90px + 10px)), repeating-linear-gradient(to bottom, transparent, transparent 90px, #008000 90px, #008000 calc(90px + 10px)); }
-  .board .cell.x::after {
-    content: 'X';
-    text-align: center; }
-  .board .cell.o::after {
-    content: 'O'; }
+  .board .cell.o {
+    background: url(img/o-web.svg) no-repeat center/90%; }
+  .board .cell.x {
+    background: url(img/x-web.svg) no-repeat center/90%; }
 
 .restart-button-container {
   height: 100px;
