@@ -1,0 +1,90 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+button {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.restart-button {
+  color: green;
+  font-size: 24px;
+}
+
+.game {
+  display: flex;
+  flex-flow: column nowrap;
+  width: 100%;
+  height: 100%;
+}
+
+.player-selection {
+  margin: auto;
+}
+
+.board-container {
+  margin: 0;
+  background-color: blue;
+}
+
+.board {
+  $board-gutter-color: #008000;
+  $board-cell-width: 90px;
+  $board-gutter-width: 10px;
+  $board-width: 3 * $board-cell-width + 2 * $board-gutter-width;
+  display: grid;
+  grid-gap: $board-gutter-width;
+  grid-template: repeat(3, $board-cell-width) / repeat(3, $board-cell-width);
+
+  width: $board-width;
+  height: $board-width;
+  margin: 20px auto;
+
+  background-image: repeating-linear-gradient(to right, transparent, transparent $board-cell-width,
+          $board-gutter-color $board-cell-width, $board-gutter-color calc(#{$board-cell-width} + #{$board-gutter-width})),
+  repeating-linear-gradient(to bottom, transparent, transparent $board-cell-width,
+                  $board-gutter-color $board-cell-width, $board-gutter-color calc(#{$board-cell-width} + #{$board-gutter-width}));
+
+  .cell {
+
+    &.x {
+      &::after {
+        content: 'X';
+        text-align: center;
+      }
+    }
+
+    &.o {
+      &::after {
+        content: 'O';
+      }
+    }
+  }
+}
+
+.restart-button-container {
+  height: 100px;
+  margin: auto;
+}
+
+@media only screen and (min-device-width: 500px) {
+  html,
+  body {
+    height: auto;
+  }
+
+  .game {
+    width: 500px;
+    height: auto;
+    margin: auto;
+  }
+}
