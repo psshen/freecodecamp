@@ -28,27 +28,30 @@ button {
 }
 
 .player-selection {
-  margin: auto;
-  height: 100px;
-  width: 100%;
   display: flex;
   flex-flow: row nowrap;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  height: 100px;
+  margin: auto;
 
   [class$="-btn"],
   [class*="-btn"] {
-    height: 32px;
     width: 64px;
+    height: 64px;
+    margin: 50px;
     border: solid 1px;
+
+    img {
+      width: 90%;
+      height: 90%;
+    }
   }
 
-  .x-btn {
-    background: url(img/x-web.svg) no-repeat left/90%;
-  }
-
-  .o-btn {
-    background: url(img/o-web.svg) no-repeat left/90%;
+  .active img {
+    // TODO keep icon centered (use absolute positioning?)
+    border-bottom: 2px solid;
   }
 }
 
@@ -78,11 +81,11 @@ button {
   .cell {
 
     &.x {
-      background: url(img/x-web.svg) no-repeat center/90%;
+      background: url('img/x-web.svg') no-repeat center / 90%;
     }
 
     &.o {
-      background: url(img/o-web.svg) no-repeat center/90%;
+      background: url('img/o-web.svg') no-repeat center / 90%;
     }
   }
 }
